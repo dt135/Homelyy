@@ -1,10 +1,12 @@
 import { createBrowserRouter } from 'react-router-dom'
+import AdminLayout from '../components/layout/AdminLayout'
 import MainLayout from '../components/layout/MainLayout'
 import AdminRoute from '../components/routing/AdminRoute'
 import ProtectedRoute from '../components/routing/ProtectedRoute'
 import AccessDeniedPage from '../pages/AccessDeniedPage'
 import AdminDashboardPage from '../pages/AdminDashboardPage'
 import CartPage from '../pages/CartPage'
+import CategoryManagementPage from '../pages/CategoryManagementPage'
 import CheckoutPage from '../pages/CheckoutPage'
 import HomePage from '../pages/HomePage'
 import LoginPage from '../pages/LoginPage'
@@ -86,16 +88,25 @@ export const appRouter = createBrowserRouter([
         element: <AdminRoute />,
         children: [
           {
-            index: true,
-            element: <AdminDashboardPage />,
-          },
-          {
-            path: 'products',
-            element: <ProductManagementPage />,
-          },
-          {
-            path: 'orders',
-            element: <OrderManagementPage />,
+            element: <AdminLayout />,
+            children: [
+              {
+                index: true,
+                element: <AdminDashboardPage />,
+              },
+              {
+                path: 'categories',
+                element: <CategoryManagementPage />,
+              },
+              {
+                path: 'products',
+                element: <ProductManagementPage />,
+              },
+              {
+                path: 'orders',
+                element: <OrderManagementPage />,
+              },
+            ],
           },
         ],
       },

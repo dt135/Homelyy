@@ -83,12 +83,16 @@ function ProductDetailPage() {
           <article className="placeholder-card">
             <h3>Thông số kỹ thuật</h3>
             <div className="spec-grid">
-              {Object.entries(product.specs).map(([key, value]) => (
-                <div key={key} className="spec-row">
-                  <span>{key}</span>
-                  <strong>{value}</strong>
-                </div>
-              ))}
+              {Object.entries(product.specs ?? {}).length === 0 ? (
+                <p className="catalog-muted">Đang cập nhật thông số kỹ thuật.</p>
+              ) : (
+                Object.entries(product.specs).map(([key, value]) => (
+                  <div key={key} className="spec-row">
+                    <span>{key}</span>
+                    <strong>{value}</strong>
+                  </div>
+                ))
+              )}
             </div>
           </article>
 

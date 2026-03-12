@@ -9,7 +9,14 @@ export type User = {
   phone?: string
 }
 
-export type SessionUser = Omit<User, 'password'>
+export type SessionUser = Omit<User, 'password'> & {
+  token: string
+}
+
+export type AuthResponse = {
+  user: Omit<User, 'password'>
+  token: string
+}
 
 export type RegisterPayload = {
   fullName: string

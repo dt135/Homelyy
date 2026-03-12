@@ -26,13 +26,17 @@ function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const initialUser = readStorage<SessionUser | null>(STORAGE_KEYS.authUser, null)
-    setUser(initialUser)
+    if (initialUser && initialUser.token) {
+      setUser(initialUser)
+      return
+    }
+    setUser(null)
   }, [])
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
-      isAuthenticated: Boolean(user),
+      isAuthenticated: Boolean(user?.token),
       login: async (payload) => {
         const loggedInUser = await loginService(payload)
         setUser(loggedInUser)
@@ -52,8 +56,12 @@ function AuthProvider({ children }: AuthProviderProps) {
           throw new Error('Bạn cần đăng nhập trước')
         }
         const updatedUser = await updateProfileService(user.id, payload)
-        setUser(updatedUser)
-        writeStorage(STORAGE_KEYS.authUser, updatedUser)
+        const nextUser: SessionUser = {
+          ...updatedUser,
+          token: user.token,
+        }
+        setUser(nextUser)
+        writeStorage(STORAGE_KEYS.authUser, nextUser)
       },
     }),
     [user],

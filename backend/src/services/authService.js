@@ -1,4 +1,5 @@
-const { users } = require('../models/mockDb')
+const User = require('../models/UserModel')
+const { sanitizeDoc } = require('../utils/mongoSanitize')
 
 function sanitizeUser(user) {
   return {
@@ -6,37 +7,39 @@ function sanitizeUser(user) {
     fullName: user.fullName,
     email: user.email,
     role: user.role,
+    phone: user.phone,
   }
 }
 
-function login(payload) {
-  const foundUser = users.find(
-    (user) => user.email.toLowerCase() === payload.email.toLowerCase() && user.password === payload.password,
-  )
+async function login(payload) {
+  const email = String(payload.email || '').trim().toLowerCase()
+  const password = String(payload.password || '')
 
-  if (!foundUser) {
+  const foundUser = await User.findOne({ email })
+
+  if (!foundUser || foundUser.password !== password) {
     throw new Error('Email hoặc mật khẩu chưa đúng')
   }
 
-  return sanitizeUser(foundUser)
+  return sanitizeUser(sanitizeDoc(foundUser))
 }
 
-function register(payload) {
-  const emailExists = users.some((user) => user.email.toLowerCase() === payload.email.toLowerCase())
-  if (emailExists) {
+async function register(payload) {
+  const email = String(payload.email || '').trim().toLowerCase()
+  const existingUser = await User.findOne({ email }).select('id')
+  if (existingUser) {
     throw new Error('Email đã tồn tại')
   }
 
-  const newUser = {
+  const createdUser = await User.create({
     id: `user-${Date.now()}`,
     fullName: payload.fullName,
-    email: payload.email,
+    email,
     password: payload.password,
     role: 'user',
-  }
+  })
 
-  users.push(newUser)
-  return sanitizeUser(newUser)
+  return sanitizeUser(sanitizeDoc(createdUser))
 }
 
 module.exports = {

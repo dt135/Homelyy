@@ -1,18 +1,33 @@
 const authService = require('../services/authService')
+const { signAccessToken } = require('../utils/jwt')
 
-function login(req, res, next) {
+async function login(req, res, next) {
   try {
-    const user = authService.login(req.body)
-    return res.status(200).json({ message: 'Đăng nhập thành công', data: user })
+    const user = await authService.login(req.body)
+    const token = signAccessToken({ id: user.id, role: user.role, email: user.email })
+    return res.status(200).json({
+      message: 'Đăng nhập thành công',
+      data: {
+        user,
+        token,
+      },
+    })
   } catch (error) {
     return next(error)
   }
 }
 
-function register(req, res, next) {
+async function register(req, res, next) {
   try {
-    const user = authService.register(req.body)
-    return res.status(201).json({ message: 'Đăng ký thành công', data: user })
+    const user = await authService.register(req.body)
+    const token = signAccessToken({ id: user.id, role: user.role, email: user.email })
+    return res.status(201).json({
+      message: 'Đăng ký thành công',
+      data: {
+        user,
+        token,
+      },
+    })
   } catch (error) {
     return next(error)
   }

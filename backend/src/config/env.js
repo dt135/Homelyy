@@ -7,7 +7,11 @@ const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: Number(process.env.PORT || 4000),
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
-  dbUri: process.env.DB_URI || 'mock://in-memory-db',
+  mongodbUri: process.env.MONGODB_URI || '',
+  dbName: process.env.DB_NAME || 'homelyy',
+  autoSeed: (process.env.AUTO_SEED || 'true').toLowerCase() !== 'false',
+  jwtSecret: process.env.JWT_SECRET || 'homelyy-dev-secret-change-me',
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
 }
 
 module.exports = env

@@ -10,7 +10,7 @@ Homelyy là dự án fullstack portfolio cho website bán đồ điện gia dụ
 
 ## Tech stack
 - Frontend: React 19, TypeScript, React Router, Context API, Vite.
-- Backend: Node.js, Express, dotenv, CORS, morgan.
+- Backend: Node.js, Express, Mongoose, dotenv, CORS, morgan.
 - Deploy: Docker, docker-compose, Nginx.
 
 ## Chạy local
@@ -37,6 +37,28 @@ docker compose up --build
 ## Biến môi trường
 - Frontend: sao chép `frontend/.env.example` thành `frontend/.env`
 - Backend: sao chép `backend/.env.example` thành `backend/.env`
+
+### Dùng API thật cho Product Detail/Home
+- Trong `frontend/.env`, giữ:
+  - `VITE_API_BASE_URL=http://localhost:4000/api`
+  - `VITE_USE_MOCK_API=false`
+- Backend đã hỗ trợ dữ liệu thật từ MongoDB Atlas cho:
+  - `GET /api/products`
+  - `GET /api/products/:id`
+
+### MongoDB Atlas
+- Dự án backend đã chuyển sang MongoDB Atlas bằng `mongoose`.
+- Cập nhật `MONGODB_URI` trong `backend/.env`:
+  - `mongodb+srv://<db_user>:<db_password>@<cluster-host>/?appName=Homelyy`
+- Thay `<db_password>` bằng mật khẩu user Atlas của bạn.
+- Cấu hình JWT trong `backend/.env`:
+  - `JWT_SECRET=...`
+  - `JWT_EXPIRES_IN=7d`
+- Nếu muốn nạp dữ liệu mẫu thủ công:
+```bash
+cd backend
+npm run db:seed
+```
 
 ## Tài liệu kỹ thuật
 - `docs/phase-roadmap.md`

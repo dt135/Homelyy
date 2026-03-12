@@ -281,9 +281,37 @@ button:disabled,
   font-family: inherit;
 }
 
+.field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.8rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  min-height: 88px;
+  resize: vertical;
+}
+
 .field input:focus {
   outline: 2px solid rgba(27, 127, 122, 0.2);
   border-color: var(--accent);
+}
+
+.field textarea:focus {
+  outline: 2px solid rgba(27, 127, 122, 0.2);
+  border-color: var(--accent);
+}
+
+.inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-main);
+  font-size: 0.9rem;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
 }
 
 .site-footer {
@@ -599,6 +627,63 @@ button:disabled,
   font-size: 0.9rem;
 }
 
+.admin-shell {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.admin-sidebar {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(165deg, rgba(18, 123, 116, 0.09), rgba(18, 123, 116, 0) 48%),
+    var(--bg-soft);
+  box-shadow: var(--shadow-soft);
+  padding: 1rem;
+  display: grid;
+  gap: 0.8rem;
+  position: sticky;
+  top: 88px;
+}
+
+.admin-sidebar-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.admin-sidebar-nav {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.admin-sidebar-link {
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 0.62rem 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.admin-sidebar-link:hover {
+  border-color: #ccd5cf;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text-main);
+}
+
+.admin-sidebar-link.is-active {
+  border-color: rgba(18, 123, 116, 0.22);
+  background: rgba(255, 255, 255, 0.92);
+  color: #0e5e58;
+}
+
+.admin-content {
+  min-width: 0;
+}
+
 .admin-kpi {
   margin: 0;
   font-family: 'Space Grotesk', sans-serif;
@@ -625,6 +710,14 @@ button:disabled,
   padding: 0.72rem 0.8rem;
   border-bottom: 1px solid #e6edeb;
   font-size: 0.9rem;
+}
+
+.admin-table select {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.34rem 0.55rem;
+  font-family: inherit;
+  font-size: 0.85rem;
 }
 
 .admin-table th {
@@ -756,5 +849,20 @@ button:disabled,
   .cart-item-card {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .admin-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    position: static;
+  }
+
+  .admin-sidebar-nav {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(170px, 1fr);
+    overflow-x: auto;
+    padding-bottom: 0.2rem;
   }
 }

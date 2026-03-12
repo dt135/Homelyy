@@ -1,20 +1,25 @@
-const { reviews } = require('../models/mockDb')
+const Review = require('../models/ReviewModel')
+const { sanitizeDoc, sanitizeDocs } = require('../utils/mongoSanitize')
 
-function listReviews(productId) {
-  return reviews.filter((review) => review.productId === productId)
+async function listReviews(productId) {
+  const filters = {}
+  if (productId) {
+    filters.productId = productId
+  }
+  const reviews = await Review.find(filters).sort({ createdAt: -1 })
+  return sanitizeDocs(reviews)
 }
 
-function createReview(payload) {
-  const review = {
+async function createReview(payload) {
+  const review = await Review.create({
     id: `RV-${Date.now()}`,
     userId: payload.userId,
     productId: payload.productId,
     rating: payload.rating,
     comment: payload.comment,
-    createdAt: new Date().toISOString(),
-  }
-  reviews.push(review)
-  return review
+    createdAt: new Date(),
+  })
+  return sanitizeDoc(review)
 }
 
 module.exports = {

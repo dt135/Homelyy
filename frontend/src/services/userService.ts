@@ -11,7 +11,9 @@ export type ProfileUpdatePayload = {
   phone?: string
 }
 
-function toSessionUser(user: User): SessionUser {
+export type ProfileUser = Omit<SessionUser, 'token'>
+
+function toProfileUser(user: User): ProfileUser {
   return {
     id: user.id,
     fullName: user.fullName,
@@ -24,9 +26,9 @@ function toSessionUser(user: User): SessionUser {
 export async function updateProfile(
   userId: string,
   payload: ProfileUpdatePayload,
-): Promise<SessionUser> {
+): Promise<ProfileUser> {
   if (!env.useMockApi) {
-    return request<SessionUser>(`${API_ENDPOINTS.users.profile}/${encodeURIComponent(userId)}`, {
+    return request<ProfileUser>(`${API_ENDPOINTS.users.profile}/${encodeURIComponent(userId)}`, {
       method: 'PATCH',
       body: payload,
     })
@@ -50,7 +52,7 @@ export async function updateProfile(
       updatedUsers[index] = updatedUser
       writeStorage(STORAGE_KEYS.users, updatedUsers)
 
-      return toSessionUser(updatedUser)
+      return toProfileUser(updatedUser)
     },
   })
 }

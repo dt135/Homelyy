@@ -1,48 +1,37 @@
-const { users } = require('../models/mockDb')
+const User = require('../models/UserModel')
+const { sanitizeDoc, sanitizeDocs } = require('../utils/mongoSanitize')
 
-function getUsers() {
-  return users.map((user) => ({
-    id: user.id,
-    fullName: user.fullName,
-    email: user.email,
-    role: user.role,
-  }))
+async function getUsers() {
+  const users = await User.find().select('id fullName email role phone')
+  return sanitizeDocs(users)
 }
 
-function updateUser(userId, payload) {
-  const index = users.findIndex((user) => user.id === userId)
-  if (index === -1) {
+async function updateUser(userId, payload) {
+  const updatedUser = await User.findOneAndUpdate(
+    { id: userId },
+    {
+      $set: {
+        ...(payload.fullName ? { fullName: payload.fullName } : {}),
+        ...(payload.phone ? { phone: payload.phone } : {}),
+      },
+    },
+    { new: true, runValidators: true },
+  ).select('id fullName email role phone')
+
+  if (!updatedUser) {
     throw new Error('Không tìm thấy người dùng')
   }
 
-  users[index] = {
-    ...users[index],
-    fullName: payload.fullName || users[index].fullName,
-    phone: payload.phone || users[index].phone,
-  }
-
-  const updatedUser = users[index]
-  return {
-    id: updatedUser.id,
-    fullName: updatedUser.fullName,
-    email: updatedUser.email,
-    role: updatedUser.role,
-    phone: updatedUser.phone,
-  }
+  return sanitizeDoc(updatedUser)
 }
 
-function getUserById(userId) {
-  const found = users.find((user) => user.id === userId)
-  if (!found) {
+async function getUserById(userId) {
+  const user = await User.findOne({ id: userId }).select('id fullName email role phone')
+  if (!user) {
     throw new Error('Không tìm thấy người dùng')
   }
 
-  return {
-    id: found.id,
-    fullName: found.fullName,
-    email: found.email,
-    role: found.role,
-  }
+  return sanitizeDoc(user)
 }
 
 module.exports = {

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { fetchAllOrders } from '../services/orderService'
 import { mockProducts } from '../services/mock/data/products'
 import type { Order } from '../types/order'
@@ -36,14 +35,6 @@ function AdminDashboardPage() {
         </article>
       </div>
 
-      <div className="button-row">
-        <Link to="/admin/products" className="primary-btn">
-          Quản lý sản phẩm
-        </Link>
-        <Link to="/admin/orders" className="ghost-btn">
-          Quản lý đơn hàng
-        </Link>
-      </div>
     </section>
   )
 }

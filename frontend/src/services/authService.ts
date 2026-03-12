@@ -1,7 +1,7 @@
 import { env } from '../config/env'
 import { API_ENDPOINTS } from '../constants/endpoints'
 import { STORAGE_KEYS } from '../constants/storageKeys'
-import type { LoginPayload, RegisterPayload, SessionUser, User } from '../types/auth'
+import type { AuthResponse, LoginPayload, RegisterPayload, SessionUser, User } from '../types/auth'
 import { readStorage, writeStorage } from '../utils/localStorage'
 import { request } from './httpClient'
 import { mockRequest } from './apiClient'
@@ -16,22 +16,31 @@ function getUsers(): User[] {
   return defaultUsers
 }
 
-function toSessionUser(user: User): SessionUser {
+function toSessionUser(user: User, token: string): SessionUser {
   return {
     id: user.id,
     fullName: user.fullName,
     email: user.email,
     role: user.role,
     phone: user.phone,
+    token,
+  }
+}
+
+function mapAuthResponse(response: AuthResponse): SessionUser {
+  return {
+    ...response.user,
+    token: response.token,
   }
 }
 
 export async function login(payload: LoginPayload): Promise<SessionUser> {
   if (!env.useMockApi) {
-    return request<SessionUser>(API_ENDPOINTS.auth.login, {
+    const response = await request<AuthResponse>(API_ENDPOINTS.auth.login, {
       method: 'POST',
       body: payload,
     })
+    return mapAuthResponse(response)
   }
 
   return mockRequest({
@@ -47,17 +56,18 @@ export async function login(payload: LoginPayload): Promise<SessionUser> {
         throw new Error('Email hoặc mật khẩu chưa đúng')
       }
 
-      return toSessionUser(found)
+      return toSessionUser(found, `mock-token-${found.id}`)
     },
   })
 }
 
 export async function register(payload: RegisterPayload): Promise<SessionUser> {
   if (!env.useMockApi) {
-    return request<SessionUser>(API_ENDPOINTS.auth.register, {
+    const response = await request<AuthResponse>(API_ENDPOINTS.auth.register, {
       method: 'POST',
       body: payload,
     })
+    return mapAuthResponse(response)
   }
 
   return mockRequest({
@@ -81,7 +91,7 @@ export async function register(payload: RegisterPayload): Promise<SessionUser> {
 
       const updatedUsers = [...users, createdUser]
       writeStorage(STORAGE_KEYS.users, updatedUsers)
-      return toSessionUser(createdUser)
+      return toSessionUser(createdUser, `mock-token-${createdUser.id}`)
     },
   })
 }

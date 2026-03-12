@@ -6,6 +6,36 @@ import { brandOptions, categoryOptions } from './mock/data/categories'
 import { mockProducts } from './mock/data/products'
 import type { Product, ProductQuery } from '../types/product'
 
+function normalizeProduct(product: Partial<Product>): Product {
+  return {
+    id: product.id ?? '',
+    slug: product.slug ?? product.id ?? '',
+    name: product.name ?? 'Sản phẩm',
+    description: product.description ?? 'Đang cập nhật mô tả sản phẩm.',
+    category: product.category ?? 'Khác',
+    brand: product.brand ?? 'Homelyy',
+    price: Number(product.price ?? 0),
+    oldPrice: product.oldPrice,
+    rating: Number(product.rating ?? 0),
+    stock: Number(product.stock ?? 0),
+    sold: Number(product.sold ?? 0),
+    thumbnail: product.thumbnail ?? (product.name || 'Sản phẩm').toUpperCase(),
+    images: Array.isArray(product.images) ? product.images : [],
+    specs:
+      product.specs && typeof product.specs === 'object'
+        ? product.specs
+        : {
+            'Đang cập nhật': 'Thông tin kỹ thuật sẽ hiển thị sớm.',
+          },
+    isFeatured: Boolean(product.isFeatured),
+    isNew: Boolean(product.isNew),
+  }
+}
+
+function normalizeProducts(products: Partial<Product>[]): Product[] {
+  return products.map((product) => normalizeProduct(product))
+}
+
 function sortProducts(products: Product[], sort: ProductQuery['sort']): Product[] {
   const cloned = [...products]
 
@@ -34,8 +64,20 @@ export async function fetchProducts(query: ProductQuery = {}): Promise<Product[]
     if (query.brand) {
       params.set('brand', query.brand)
     }
+    if (query.minPrice != null) {
+      params.set('minPrice', String(query.minPrice))
+    }
+    if (query.maxPrice != null) {
+      params.set('maxPrice', String(query.maxPrice))
+    }
+    if (query.sort) {
+      params.set('sort', query.sort)
+    }
     const queryString = params.toString()
-    return request<Product[]>(`${API_ENDPOINTS.products.list}${queryString ? `?${queryString}` : ''}`)
+    const payload = await request<Partial<Product>[]>(
+      `${API_ENDPOINTS.products.list}${queryString ? `?${queryString}` : ''}`,
+    )
+    return normalizeProducts(payload)
   }
 
   return mockRequest({
@@ -62,14 +104,15 @@ export async function fetchProducts(query: ProductQuery = {}): Promise<Product[]
         )
       })
 
-      return sortProducts(filtered, query.sort)
+      return normalizeProducts(sortProducts(filtered, query.sort))
     },
   })
 }
 
 export async function fetchProductById(productId: string): Promise<Product> {
   if (!env.useMockApi) {
-    return request<Product>(API_ENDPOINTS.products.detail.replace(':id', productId))
+    const payload = await request<Partial<Product>>(API_ENDPOINTS.products.detail.replace(':id', productId))
+    return normalizeProduct(payload)
   }
 
   return mockRequest({
@@ -78,7 +121,7 @@ export async function fetchProductById(productId: string): Promise<Product> {
       if (!found) {
         throw new Error('Product not found')
       }
-      return found
+      return normalizeProduct(found)
     },
   })
 }
@@ -86,8 +129,8 @@ export async function fetchProductById(productId: string): Promise<Product> {
 export async function fetchRelatedProducts(productId: string): Promise<Product[]> {
   if (!env.useMockApi) {
     const current = await fetchProductById(productId)
-    const allProducts = await fetchProducts()
-    return allProducts.filter((item) => item.id !== current.id && item.category === current.category).slice(0, 4)
+    const allProducts = await fetchProducts({ category: current.category, sort: 'popular' })
+    return allProducts.filter((item) => item.id !== current.id).slice(0, 4)
   }
 
   const product = mockProducts.find((item) => item.id === productId)
@@ -97,9 +140,11 @@ export async function fetchRelatedProducts(productId: string): Promise<Product[]
 
   return mockRequest({
     handler: () =>
-      mockProducts
-        .filter((item) => item.id !== productId && item.category === product.category)
-        .slice(0, 4),
+      normalizeProducts(
+        mockProducts
+          .filter((item) => item.id !== productId && item.category === product.category)
+          .slice(0, 4),
+      ),
   })
 }
 
@@ -108,10 +153,18 @@ export async function fetchCatalogFilters(): Promise<{
   brands: string[]
 }> {
   if (!env.useMockApi) {
-    const categoryPayload = await request<Array<{ id: string; name: string }>>(API_ENDPOINTS.categories.list)
+    const [categoryPayload, productsPayload] = await Promise.all([
+      request<Array<{ id: string; name: string }>>(API_ENDPOINTS.categories.list),
+      request<Array<{ brand: string }>>(`${API_ENDPOINTS.products.list}?limit=200`),
+    ])
+
+    const brandSet = new Set(
+      productsPayload.map((item) => item.brand).filter((brand): brand is string => Boolean(brand)),
+    )
+
     return {
       categories: categoryPayload.map((item) => item.name),
-      brands: [],
+      brands: [...brandSet].sort((a, b) => a.localeCompare(b, 'vi')),
     }
   }
 
@@ -121,13 +174,23 @@ export async function fetchCatalogFilters(): Promise<{
 }
 
 export async function fetchFeaturedProducts(): Promise<Product[]> {
+  if (!env.useMockApi) {
+    const payload = await request<Partial<Product>[]>(`${API_ENDPOINTS.products.list}?featured=true&sort=popular&limit=4`)
+    return normalizeProducts(payload)
+  }
+
   return mockRequest({
-    handler: () => mockProducts.filter((product) => product.isFeatured),
+    handler: () => normalizeProducts(mockProducts.filter((product) => product.isFeatured)),
   })
 }
 
 export async function fetchNewProducts(): Promise<Product[]> {
+  if (!env.useMockApi) {
+    const payload = await request<Partial<Product>[]>(`${API_ENDPOINTS.products.list}?new=true&sort=newest&limit=4`)
+    return normalizeProducts(payload)
+  }
+
   return mockRequest({
-    handler: () => mockProducts.filter((product) => product.isNew),
+    handler: () => normalizeProducts(mockProducts.filter((product) => product.isNew)),
   })
 }
