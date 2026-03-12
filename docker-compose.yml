@@ -1,0 +1,21 @@
+services:
+  homelyy-backend:
+    build:
+      context: ./backend
+    container_name: homelyy-backend
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      CLIENT_URL: http://localhost:8080
+      DB_URI: mock://in-memory-db
+
+  homelyy-frontend:
+    build:
+      context: ./frontend
+    container_name: homelyy-frontend
+    depends_on:
+      - homelyy-backend
+    ports:
+      - "8080:80"
