@@ -14,6 +14,9 @@ services:
       AUTO_SEED: ${AUTO_SEED:-false}
       JWT_SECRET: ${JWT_SECRET:-homelyy-super-secret-key}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
 
   homelyy-frontend:
     build:

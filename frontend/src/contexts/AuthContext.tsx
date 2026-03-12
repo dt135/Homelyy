@@ -12,7 +12,7 @@ type AuthContextValue = {
   login: (payload: LoginPayload) => Promise<void>
   register: (payload: RegisterPayload) => Promise<void>
   logout: () => void
-  updateProfile: (payload: { fullName: string; phone?: string }) => Promise<void>
+  updateProfile: (payload: { fullName: string; phone?: string; avatarFile?: File | null }) => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined)

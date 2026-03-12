@@ -6,7 +6,7 @@ type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
 type RequestOptions = {
   method?: HttpMethod
-  body?: unknown
+  body?: unknown | FormData
 }
 
 type ApiResponse<T> = {
@@ -34,13 +34,19 @@ function getAuthToken(): string {
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const token = getAuthToken()
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
+
   const response = await fetch(`${env.apiBaseUrl}${path}`, {
     method: options.method ?? 'GET',
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    body: isFormData
+      ? (options.body as FormData)
+      : options.body
+        ? JSON.stringify(options.body)
+        : undefined,
   })
 
   const payload = (await response.json()) as ApiResponse<T> | { message?: string }

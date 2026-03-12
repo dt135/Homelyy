@@ -14,7 +14,9 @@ const productSchema = new mongoose.Schema(
     stock: { type: Number, default: 0, min: 0 },
     sold: { type: Number, default: 0, min: 0 },
     thumbnail: { type: String, required: true, trim: true },
+    thumbnailPublicId: { type: String, default: '' },
     images: { type: [String], default: [] },
+    imagePublicIds: { type: [String], default: [] },
     specs: {
       type: Map,
       of: String,

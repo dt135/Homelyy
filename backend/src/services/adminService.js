@@ -2,6 +2,7 @@ const Category = require('../models/CategoryModel')
 const Order = require('../models/OrderModel')
 const Product = require('../models/ProductModel')
 const User = require('../models/UserModel')
+const { destroyImagesByPublicIds } = require('./cloudinaryService')
 const { sanitizeDoc, sanitizeDocs } = require('../utils/mongoSanitize')
 const {
   normalizeEmail,
@@ -57,12 +58,77 @@ function toPositiveNumber(value, fallback = 0) {
 }
 
 function normalizeSpecs(specs) {
+  if (typeof specs === 'string') {
+    try {
+      const parsed = JSON.parse(specs)
+      return normalizeSpecs(parsed)
+    } catch (_error) {
+      return {}
+    }
+  }
+
   if (!specs || typeof specs !== 'object' || Array.isArray(specs)) {
     return {}
   }
   return Object.fromEntries(
     Object.entries(specs).map(([key, value]) => [String(key), String(value)]),
   )
+}
+
+function normalizeStringArray(input) {
+  if (Array.isArray(input)) {
+    return input.map((item) => String(item || '').trim()).filter(Boolean)
+  }
+
+  if (input == null) {
+    return []
+  }
+
+  const raw = String(input).trim()
+  if (!raw) {
+    return []
+  }
+
+  if (raw.startsWith('[') && raw.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        return normalizeStringArray(parsed)
+      }
+    } catch (_error) {
+      // ignore invalid JSON and continue with comma-separated parsing
+    }
+  }
+
+  return raw
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+function normalizeAssetArray(input) {
+  if (Array.isArray(input)) {
+    return input
+      .map((item) => {
+        if (!item || typeof item !== 'object') {
+          return null
+        }
+
+        const url = String(item.url || '').trim()
+        const publicId = String(item.publicId || '').trim()
+        if (!url) {
+          return null
+        }
+
+        return {
+          url,
+          publicId,
+        }
+      })
+      .filter(Boolean)
+  }
+
+  return []
 }
 
 function parseBooleanInput(value) {
@@ -203,7 +269,7 @@ async function getOrdersForAdmin() {
 
 async function getUsersForAdmin() {
   const users = await User.find()
-    .select('id fullName email role phone createdAt updatedAt')
+    .select('id fullName email role phone avatarUrl createdAt updatedAt')
     .sort({ createdAt: -1 })
   return sanitizeDocs(users)
 }
@@ -238,6 +304,8 @@ async function createUserForAdmin(payload) {
     password,
     role,
     phone,
+    avatarUrl: '',
+    avatarPublicId: '',
   })
 
   return sanitizeDoc({
@@ -246,6 +314,7 @@ async function createUserForAdmin(payload) {
     email: createdUser.email,
     role: createdUser.role,
     phone: createdUser.phone,
+    avatarUrl: createdUser.avatarUrl,
     createdAt: createdUser.createdAt,
     updatedAt: createdUser.updatedAt,
   })
@@ -329,6 +398,7 @@ async function updateUserForAdmin(userId, payload, authUserId) {
     email: user.email,
     role: user.role,
     phone: user.phone,
+    avatarUrl: user.avatarUrl,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   })
@@ -357,35 +427,55 @@ async function deleteUserForAdmin(userId, authUserId) {
 
   await user.deleteOne()
 
+  if (user.avatarPublicId) {
+    await destroyImagesByPublicIds(user.avatarPublicId)
+  }
+
   return sanitizeDoc({
     id: user.id,
     fullName: user.fullName,
     email: user.email,
     role: user.role,
     phone: user.phone,
+    avatarUrl: user.avatarUrl,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   })
 }
 
-async function createProductForAdmin(payload) {
-  const name = String(payload.name || '').trim()
-  const category = String(payload.category || '').trim()
-  const brand = String(payload.brand || '').trim()
-  const description = String(payload.description || '').trim()
+async function createProductForAdmin(payload, uploadedAssets = {}) {
+  const input = payload && typeof payload === 'object' ? payload : {}
+  const uploadedThumbnail = uploadedAssets?.thumbnail || null
+  const uploadedImageAssets = normalizeAssetArray(uploadedAssets?.images)
+
+  const name = String(input.name || '').trim()
+  const category = String(input.category || '').trim()
+  const brand = String(input.brand || '').trim()
+  const description = String(input.description || '').trim()
 
   if (!name || !category || !brand || !description) {
     throw new Error('Thiếu thông tin bắt buộc: tên, danh mục, thương hiệu, mô tả')
   }
 
-  const id = String(payload.id || `prd-${Date.now()}`)
+  const id = String(input.id || `prd-${Date.now()}`)
   const existingById = await Product.findOne({ id }).select('id')
   if (existingById) {
     throw new Error('ID sản phẩm đã tồn tại')
   }
 
-  const preferredSlug = toSlug(payload.slug || name)
+  const preferredSlug = toSlug(input.slug || name)
   const slug = await ensureUniqueProductSlug(preferredSlug)
+
+  const bodyImages = normalizeStringArray(input.images)
+  const bodyImagePublicIds = normalizeStringArray(input.imagePublicIds)
+  const uploadedImageUrls = uploadedImageAssets.map((item) => item.url)
+  const uploadedImagePublicIds = uploadedImageAssets.map((item) => item.publicId)
+
+  const images = [...bodyImages, ...uploadedImageUrls].filter(Boolean)
+  const imagePublicIds = [...bodyImagePublicIds, ...uploadedImagePublicIds].filter(Boolean)
+
+  const thumbnail = String(uploadedThumbnail?.url || input.thumbnail || images[0] || name.toUpperCase()).trim()
+  const thumbnailPublicId = String(uploadedThumbnail?.publicId || input.thumbnailPublicId || '').trim()
 
   const product = await Product.create({
     id,
@@ -394,76 +484,121 @@ async function createProductForAdmin(payload) {
     description,
     category,
     brand,
-    price: toPositiveNumber(payload.price),
-    oldPrice: payload.oldPrice == null ? null : toPositiveNumber(payload.oldPrice),
-    rating: toPositiveNumber(payload.rating),
-    stock: toPositiveNumber(payload.stock),
-    sold: toPositiveNumber(payload.sold),
-    thumbnail: String(payload.thumbnail || name.toUpperCase()).trim(),
-    images: Array.isArray(payload.images) ? payload.images.map((item) => String(item)) : [],
-    specs: normalizeSpecs(payload.specs),
-    isFeatured: parseBooleanInput(payload.isFeatured),
-    isNew: parseBooleanInput(payload.isNew),
+    price: toPositiveNumber(input.price),
+    oldPrice: input.oldPrice == null || input.oldPrice === '' ? null : toPositiveNumber(input.oldPrice),
+    rating: toPositiveNumber(input.rating),
+    stock: toPositiveNumber(input.stock),
+    sold: toPositiveNumber(input.sold),
+    thumbnail,
+    thumbnailPublicId,
+    images,
+    imagePublicIds,
+    specs: normalizeSpecs(input.specs),
+    isFeatured: parseBooleanInput(input.isFeatured),
+    isNew: parseBooleanInput(input.isNew),
   })
 
   return sanitizeDoc(product)
 }
 
-async function updateProductForAdmin(productId, payload) {
+async function updateProductForAdmin(productId, payload, uploadedAssets = {}) {
+  const input = payload && typeof payload === 'object' ? payload : {}
+  const uploadedThumbnail = uploadedAssets?.thumbnail || null
+  const uploadedImageAssets = normalizeAssetArray(uploadedAssets?.images)
+
   const product = await Product.findOne({ id: productId })
   if (!product) {
     throw new Error('Không tìm thấy sản phẩm để cập nhật')
   }
 
-  if (payload.name != null) {
-    product.name = String(payload.name).trim()
+  const previousThumbnailPublicId = product.thumbnailPublicId
+  const previousImagePublicIds = normalizeStringArray(product.imagePublicIds)
+
+  if (input.name != null) {
+    product.name = String(input.name).trim()
   }
-  if (payload.description != null) {
-    product.description = String(payload.description).trim()
+  if (input.description != null) {
+    product.description = String(input.description).trim()
   }
-  if (payload.category != null) {
-    product.category = String(payload.category).trim()
+  if (input.category != null) {
+    product.category = String(input.category).trim()
   }
-  if (payload.brand != null) {
-    product.brand = String(payload.brand).trim()
+  if (input.brand != null) {
+    product.brand = String(input.brand).trim()
   }
-  if (payload.price != null) {
-    product.price = toPositiveNumber(payload.price)
+  if (input.price != null) {
+    product.price = toPositiveNumber(input.price)
   }
-  if (payload.oldPrice != null) {
-    product.oldPrice = payload.oldPrice === '' ? null : toPositiveNumber(payload.oldPrice)
+  if (input.oldPrice != null) {
+    product.oldPrice = input.oldPrice === '' ? null : toPositiveNumber(input.oldPrice)
   }
-  if (payload.rating != null) {
-    product.rating = toPositiveNumber(payload.rating)
+  if (input.rating != null) {
+    product.rating = toPositiveNumber(input.rating)
   }
-  if (payload.stock != null) {
-    product.stock = toPositiveNumber(payload.stock)
+  if (input.stock != null) {
+    product.stock = toPositiveNumber(input.stock)
   }
-  if (payload.sold != null) {
-    product.sold = toPositiveNumber(payload.sold)
+  if (input.sold != null) {
+    product.sold = toPositiveNumber(input.sold)
   }
-  if (payload.thumbnail != null) {
-    product.thumbnail = String(payload.thumbnail).trim()
-  }
-  if (payload.images != null) {
-    product.images = Array.isArray(payload.images) ? payload.images.map((item) => String(item)) : []
-  }
-  if (payload.specs != null) {
-    product.specs = normalizeSpecs(payload.specs)
-  }
-  if (payload.isFeatured != null) {
-    product.isFeatured = parseBooleanInput(payload.isFeatured)
-  }
-  if (payload.isNew != null) {
-    product.isNew = parseBooleanInput(payload.isNew)
+  if (uploadedThumbnail) {
+    product.thumbnail = String(uploadedThumbnail.url || '').trim()
+  } else if (input.thumbnail != null) {
+    product.thumbnail = String(input.thumbnail).trim()
   }
 
-  if (payload.slug != null || payload.name != null) {
-    const preferredSlug = toSlug(payload.slug || product.name)
+  if (uploadedThumbnail) {
+    product.thumbnailPublicId = String(uploadedThumbnail.publicId || '').trim()
+  } else if (input.thumbnailPublicId != null) {
+    product.thumbnailPublicId = String(input.thumbnailPublicId).trim()
+  }
+
+  const hasImagesInput = input.images != null
+  if (hasImagesInput || uploadedImageAssets.length > 0) {
+    const bodyImages = hasImagesInput ? normalizeStringArray(input.images) : normalizeStringArray(product.images)
+    const uploadedImageUrls = uploadedImageAssets.map((item) => item.url)
+    product.images = [...bodyImages, ...uploadedImageUrls].filter(Boolean)
+  }
+
+  const hasImagePublicIdsInput = input.imagePublicIds != null
+  if (hasImagePublicIdsInput || uploadedImageAssets.length > 0) {
+    const bodyImagePublicIds = hasImagePublicIdsInput
+      ? normalizeStringArray(input.imagePublicIds)
+      : normalizeStringArray(product.imagePublicIds)
+    const uploadedImagePublicIds = uploadedImageAssets.map((item) => item.publicId)
+    product.imagePublicIds = [...bodyImagePublicIds, ...uploadedImagePublicIds].filter(Boolean)
+  }
+
+  if (input.specs != null) {
+    product.specs = normalizeSpecs(input.specs)
+  }
+  if (input.isFeatured != null) {
+    product.isFeatured = parseBooleanInput(input.isFeatured)
+  }
+  if (input.isNew != null) {
+    product.isNew = parseBooleanInput(input.isNew)
+  }
+
+  if (input.slug != null || input.name != null) {
+    const preferredSlug = toSlug(input.slug || product.name)
     product.slug = await ensureUniqueProductSlug(preferredSlug, productId)
   }
 
   await product.save()
+
+  if (previousThumbnailPublicId && previousThumbnailPublicId !== product.thumbnailPublicId) {
+    await destroyImagesByPublicIds(previousThumbnailPublicId)
+  }
+
+  const nextImagePublicIds = normalizeStringArray(product.imagePublicIds)
+  const removedImagePublicIds = previousImagePublicIds.filter(
+    (publicId) => !nextImagePublicIds.includes(publicId),
+  )
+
+  if (removedImagePublicIds.length > 0) {
+    await destroyImagesByPublicIds(removedImagePublicIds)
+  }
+
   return sanitizeDoc(product)
 }
 
@@ -472,6 +607,15 @@ async function deleteProductForAdmin(productId) {
   if (!deleted) {
     throw new Error('Không tìm thấy sản phẩm để xóa')
   }
+
+  const publicIds = [
+    deleted.thumbnailPublicId,
+    ...normalizeStringArray(deleted.imagePublicIds),
+  ].filter(Boolean)
+  if (publicIds.length > 0) {
+    await destroyImagesByPublicIds(publicIds)
+  }
+
   return sanitizeDoc(deleted)
 }
 

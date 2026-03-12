@@ -11,7 +11,9 @@ export type Product = {
   stock: number
   sold: number
   thumbnail: string
+  thumbnailPublicId?: string
   images: string[]
+  imagePublicIds?: string[]
   specs: Record<string, string>
   isFeatured?: boolean
   isNew?: boolean

@@ -4,6 +4,7 @@ import { useCart } from '../hooks/useCart'
 import { getErrorMessage } from '../services/apiClient'
 import { fetchProductById, fetchRelatedProducts } from '../services/productService'
 import type { Product } from '../types/product'
+import { isLikelyImageUrl } from '../utils/images'
 import { vndFormatter } from '../utils/formatters'
 
 function ProductDetailPage() {
@@ -48,7 +49,13 @@ function ProductDetailPage() {
       {!isLoading && !errorMessage && product ? (
         <>
           <div className="product-detail-card">
-            <div className="product-detail-media">{product.thumbnail}</div>
+            <div className="product-detail-media">
+              {isLikelyImageUrl(product.thumbnail) ? (
+                <img src={product.thumbnail} alt={product.name} className="product-detail-media-image" />
+              ) : (
+                product.thumbnail
+              )}
+            </div>
             <div className="product-detail-content">
               <h2>{product.name}</h2>
               <p className="catalog-muted">{product.category}</p>
@@ -104,7 +111,11 @@ function ProductDetailPage() {
               <div className="related-grid">
                 {relatedProducts.map((item) => (
                   <Link key={item.id} to={`/products/${item.id}`} className="related-card">
-                    <p>{item.thumbnail}</p>
+                    {isLikelyImageUrl(item.thumbnail) ? (
+                      <img src={item.thumbnail} alt={item.name} className="related-card-image" />
+                    ) : (
+                      <p>{item.thumbnail}</p>
+                    )}
                     <strong>{item.name}</strong>
                     <span>{vndFormatter.format(item.price)}</span>
                   </Link>

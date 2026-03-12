@@ -20,7 +20,9 @@ function normalizeProduct(product: Partial<Product>): Product {
     stock: Number(product.stock ?? 0),
     sold: Number(product.sold ?? 0),
     thumbnail: product.thumbnail ?? (product.name || 'Sản phẩm').toUpperCase(),
+    thumbnailPublicId: product.thumbnailPublicId,
     images: Array.isArray(product.images) ? product.images : [],
+    imagePublicIds: Array.isArray(product.imagePublicIds) ? product.imagePublicIds : [],
     specs:
       product.specs && typeof product.specs === 'object'
         ? product.specs

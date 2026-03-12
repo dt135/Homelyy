@@ -1,4 +1,31 @@
 const adminService = require('../services/adminService')
+const { destroyImagesByPublicIds } = require('../services/cloudinaryService')
+
+function getUploadedProductAssets(files) {
+  const thumbnailFile = files?.thumbnail?.[0]
+  const imageFiles = Array.isArray(files?.images) ? files.images : []
+
+  return {
+    thumbnail: thumbnailFile
+      ? {
+          url: thumbnailFile.path,
+          publicId: thumbnailFile.filename,
+        }
+      : null,
+    images: imageFiles.map((file) => ({
+      url: file.path,
+      publicId: file.filename,
+    })),
+  }
+}
+
+async function cleanupUploadedProductAssets(files) {
+  const { thumbnail, images } = getUploadedProductAssets(files)
+  const publicIds = [thumbnail?.publicId, ...images.map((item) => item.publicId)].filter(Boolean)
+  if (publicIds.length > 0) {
+    await destroyImagesByPublicIds(publicIds)
+  }
+}
 
 async function getDashboard(_req, res, next) {
   try {
@@ -74,18 +101,22 @@ async function deleteCategory(req, res, next) {
 
 async function createProduct(req, res, next) {
   try {
-    const createdProduct = await adminService.createProductForAdmin(req.body)
+    const assets = getUploadedProductAssets(req.files)
+    const createdProduct = await adminService.createProductForAdmin(req.body, assets)
     return res.status(201).json({ message: 'Tạo sản phẩm thành công', data: createdProduct })
   } catch (error) {
+    await cleanupUploadedProductAssets(req.files)
     return next(error)
   }
 }
 
 async function updateProduct(req, res, next) {
   try {
-    const updatedProduct = await adminService.updateProductForAdmin(req.params.id, req.body)
+    const assets = getUploadedProductAssets(req.files)
+    const updatedProduct = await adminService.updateProductForAdmin(req.params.id, req.body, assets)
     return res.status(200).json({ message: 'Cập nhật sản phẩm thành công', data: updatedProduct })
   } catch (error) {
+    await cleanupUploadedProductAssets(req.files)
     return next(error)
   }
 }

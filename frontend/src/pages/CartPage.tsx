@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useCart } from '../hooks/useCart'
+import { isLikelyImageUrl } from '../utils/images'
 import { vndFormatter } from '../utils/formatters'
 
 function CartPage() {
@@ -25,7 +26,11 @@ function CartPage() {
             {lineItems.map((item) => (
               <article key={item.productId} className="cart-item-card">
                 <div>
-                  <p className="tag">{item.thumbnail}</p>
+                  {isLikelyImageUrl(item.thumbnail) ? (
+                    <img src={item.thumbnail} alt={item.name} className="cart-item-thumb" />
+                  ) : (
+                    <p className="tag">{item.thumbnail}</p>
+                  )}
                   <h2>{item.name}</h2>
                   <p className="catalog-muted">{vndFormatter.format(item.price)}</p>
                 </div>

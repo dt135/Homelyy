@@ -15,6 +15,7 @@ function sanitizeUser(user) {
     email: user.email,
     role: user.role,
     phone: user.phone,
+    avatarUrl: user.avatarUrl,
   }
 }
 
@@ -59,6 +60,8 @@ async function register(payload) {
     password,
     role: 'user',
     phone,
+    avatarUrl: '',
+    avatarPublicId: '',
   })
 
   return sanitizeUser(sanitizeDoc(createdUser))

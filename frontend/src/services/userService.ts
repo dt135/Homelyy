@@ -9,6 +9,7 @@ import { mockRequest } from './apiClient'
 export type ProfileUpdatePayload = {
   fullName: string
   phone?: string
+  avatarFile?: File | null
 }
 
 export type ProfileUser = Omit<SessionUser, 'token'>
@@ -20,6 +21,7 @@ function toProfileUser(user: User): ProfileUser {
     email: user.email,
     role: user.role,
     phone: user.phone,
+    avatarUrl: user.avatarUrl,
   }
 }
 
@@ -28,9 +30,16 @@ export async function updateProfile(
   payload: ProfileUpdatePayload,
 ): Promise<ProfileUser> {
   if (!env.useMockApi) {
+    const body = new FormData()
+    body.append('fullName', payload.fullName)
+    body.append('phone', payload.phone ?? '')
+    if (payload.avatarFile) {
+      body.append('avatar', payload.avatarFile)
+    }
+
     return request<ProfileUser>(`${API_ENDPOINTS.users.profile}/${encodeURIComponent(userId)}`, {
       method: 'PATCH',
-      body: payload,
+      body,
     })
   }
 
@@ -46,6 +55,10 @@ export async function updateProfile(
         ...users[index],
         fullName: payload.fullName,
         phone: payload.phone,
+        avatarUrl:
+          payload.avatarFile && typeof URL !== 'undefined'
+            ? URL.createObjectURL(payload.avatarFile)
+            : users[index].avatarUrl,
       }
 
       const updatedUsers = [...users]

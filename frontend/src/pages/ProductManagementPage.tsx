@@ -88,6 +88,8 @@ function ProductManagementPage() {
   const [keyword, setKeyword] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<ProductForm>(initialForm)
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
+  const [imageFiles, setImageFiles] = useState<File[]>([])
 
   async function loadProducts() {
     try {
@@ -122,6 +124,8 @@ function ProductManagementPage() {
   function resetForm() {
     setEditingId(null)
     setForm(initialForm)
+    setThumbnailFile(null)
+    setImageFiles([])
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -156,7 +160,45 @@ function ProductManagementPage() {
         isNew: form.isNew,
       }
 
-      if (editingId) {
+      const shouldUseFormData = Boolean(thumbnailFile || imageFiles.length > 0)
+
+      if (shouldUseFormData) {
+        const formData = new FormData()
+
+        if (!editingId && payload.id) {
+          formData.append('id', payload.id)
+        }
+
+        formData.append('name', payload.name)
+        formData.append('description', payload.description)
+        formData.append('category', payload.category)
+        formData.append('brand', payload.brand)
+        formData.append('price', String(payload.price))
+        formData.append('oldPrice', payload.oldPrice == null ? '' : String(payload.oldPrice))
+        formData.append('stock', String(payload.stock))
+        formData.append('sold', String(payload.sold))
+        if (!thumbnailFile) {
+          formData.append('thumbnail', payload.thumbnail)
+        }
+        formData.append('images', JSON.stringify(payload.images))
+        formData.append('specs', JSON.stringify(payload.specs))
+        formData.append('isFeatured', String(payload.isFeatured))
+        formData.append('isNew', String(payload.isNew))
+
+        if (thumbnailFile) {
+          formData.append('thumbnail', thumbnailFile)
+        }
+
+        imageFiles.forEach((file) => {
+          formData.append('images', file)
+        })
+
+        if (editingId) {
+          await updateAdminProduct(editingId, formData)
+        } else {
+          await createAdminProduct(formData)
+        }
+      } else if (editingId) {
         await updateAdminProduct(editingId, payload)
       } else {
         await createAdminProduct(payload)
@@ -193,6 +235,8 @@ function ProductManagementPage() {
   function startEdit(product: Product) {
     setEditingId(product.id)
     setForm(mapProductToForm(product))
+    setThumbnailFile(null)
+    setImageFiles([])
   }
 
   return (
@@ -270,6 +314,15 @@ function ProductManagementPage() {
             <span>Thumbnail</span>
             <input value={form.thumbnail} onChange={(event) => updateField('thumbnail', event.target.value)} />
           </label>
+
+          <label className="field">
+            <span>Tải thumbnail mới (tùy chọn)</span>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(event) => setThumbnailFile(event.target.files?.[0] ?? null)}
+            />
+          </label>
         </div>
 
         <label className="field">
@@ -280,6 +333,16 @@ function ProductManagementPage() {
         <label className="field">
           <span>Danh sách ảnh (phân cách bằng dấu phẩy)</span>
           <input value={form.imagesText} onChange={(event) => updateField('imagesText', event.target.value)} />
+        </label>
+
+        <label className="field">
+          <span>Tải thêm ảnh sản phẩm (tùy chọn)</span>
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            multiple
+            onChange={(event) => setImageFiles(Array.from(event.target.files || []))}
+          />
         </label>
 
         <label className="field">

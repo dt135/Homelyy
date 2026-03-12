@@ -12,6 +12,9 @@ const env = {
   autoSeed: (process.env.AUTO_SEED || 'true').toLowerCase() !== 'false',
   jwtSecret: process.env.JWT_SECRET || 'homelyy-dev-secret-change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
+  cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || '',
+  cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || '',
 }
 
 module.exports = env

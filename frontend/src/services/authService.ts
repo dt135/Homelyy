@@ -23,6 +23,7 @@ function toSessionUser(user: User, token: string): SessionUser {
     email: user.email,
     role: user.role,
     phone: user.phone,
+    avatarUrl: user.avatarUrl,
     token,
   }
 }
@@ -87,6 +88,7 @@ export async function register(payload: RegisterPayload): Promise<SessionUser> {
         email: payload.email,
         password: payload.password,
         role: 'user',
+        avatarUrl: '',
       }
 
       const updatedUsers = [...users, createdUser]

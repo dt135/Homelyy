@@ -27,6 +27,7 @@ export type AdminUser = {
   email: string
   role: 'user' | 'admin'
   phone?: string
+  avatarUrl?: string
   createdAt?: string
   updatedAt?: string
 }
@@ -61,7 +62,9 @@ export type AdminProductPayload = {
   stock: number
   sold?: number
   thumbnail: string
+  thumbnailPublicId?: string
   images?: string[]
+  imagePublicIds?: string[]
   specs?: Record<string, string>
   isFeatured?: boolean
   isNew?: boolean
@@ -126,14 +129,17 @@ export async function fetchAdminProducts(): Promise<Product[]> {
   return request<Product[]>(API_ENDPOINTS.admin.products)
 }
 
-export async function createAdminProduct(payload: AdminProductPayload): Promise<Product> {
+export async function createAdminProduct(payload: AdminProductPayload | FormData): Promise<Product> {
   return request<Product>(API_ENDPOINTS.admin.products, {
     method: 'POST',
     body: payload,
   })
 }
 
-export async function updateAdminProduct(productId: string, payload: Partial<AdminProductPayload>): Promise<Product> {
+export async function updateAdminProduct(
+  productId: string,
+  payload: Partial<AdminProductPayload> | FormData,
+): Promise<Product> {
   return request<Product>(API_ENDPOINTS.admin.productDetail.replace(':id', productId), {
     method: 'PATCH',
     body: payload,

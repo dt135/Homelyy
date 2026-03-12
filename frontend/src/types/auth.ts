@@ -7,6 +7,7 @@ export type User = {
   password: string
   role: Role
   phone?: string
+  avatarUrl?: string
 }
 
 export type SessionUser = Omit<User, 'password'> & {

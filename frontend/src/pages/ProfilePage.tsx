@@ -11,12 +11,31 @@ function ProfilePage() {
   const { user, updateProfile } = useAuth()
   const [fullName, setFullName] = useState(user?.fullName ?? '')
   const [phone, setPhone] = useState(user?.phone ?? '')
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('')
   const [orders, setOrders] = useState<Order[]>([])
   const [statusMessage, setStatusMessage] = useState('')
+
+  const avatarPreview = avatarPreviewUrl || user?.avatarUrl || ''
+
+  useEffect(() => {
+    if (!avatarFile || typeof URL === 'undefined') {
+      setAvatarPreviewUrl('')
+      return
+    }
+
+    const objectUrl = URL.createObjectURL(avatarFile)
+    setAvatarPreviewUrl(objectUrl)
+
+    return () => {
+      URL.revokeObjectURL(objectUrl)
+    }
+  }, [avatarFile])
 
   useEffect(() => {
     setFullName(user?.fullName ?? '')
     setPhone(user?.phone ?? '')
+    setAvatarFile(null)
     if (!user) {
       return
     }
@@ -45,8 +64,10 @@ function ProfilePage() {
       await updateProfile({
         fullName: normalizeWhitespace(fullName),
         phone: normalizePhone(phone),
+        avatarFile,
       })
       setStatusMessage('Cập nhật hồ sơ thành công')
+      setAvatarFile(null)
     } catch {
       setStatusMessage('Có lỗi khi cập nhật hồ sơ')
     }
@@ -61,6 +82,24 @@ function ProfilePage() {
         <form className="placeholder-card" onSubmit={handleSubmit}>
           <h2>Thông tin cá nhân</h2>
           <p className="catalog-muted">Email: {user?.email}</p>
+
+          <div className="profile-avatar-wrap">
+            {avatarPreview ? (
+              <img src={avatarPreview} alt={user?.fullName || 'Avatar'} className="profile-avatar" />
+            ) : (
+              <div className="profile-avatar-fallback">{user?.fullName?.slice(0, 1).toUpperCase() || 'U'}</div>
+            )}
+          </div>
+
+          <label className="field">
+            <span>Ảnh đại diện</span>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(event) => setAvatarFile(event.target.files?.[0] ?? null)}
+            />
+          </label>
+
           <label className="field">
             <span>Họ và tên</span>
             <input value={fullName} onChange={(event) => setFullName(event.target.value)} />

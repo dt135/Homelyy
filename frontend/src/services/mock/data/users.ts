@@ -8,6 +8,7 @@ export const defaultUsers: User[] = [
     password: '123456',
     role: 'user',
     phone: '0900000001',
+    avatarUrl: '',
   },
   {
     id: 'admin-1',
@@ -16,5 +17,6 @@ export const defaultUsers: User[] = [
     password: 'admin123',
     role: 'admin',
     phone: '0900000002',
+    avatarUrl: '',
   },
 ]

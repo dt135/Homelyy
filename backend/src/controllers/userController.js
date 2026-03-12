@@ -1,4 +1,5 @@
 const userService = require('../services/userService')
+const { destroyImagesByPublicIds } = require('../services/cloudinaryService')
 
 function ensureSelfOrAdmin(authUser, targetUserId) {
   if (!authUser || (authUser.role !== 'admin' && authUser.id !== targetUserId)) {
@@ -30,9 +31,19 @@ async function getUserDetail(req, res, next) {
 async function updateUser(req, res, next) {
   try {
     ensureSelfOrAdmin(req.authUser, req.params.id)
-    const user = await userService.updateUser(req.params.id, req.body)
+    const avatar = req.file
+      ? {
+          url: req.file.path,
+          publicId: req.file.filename,
+        }
+      : null
+
+    const user = await userService.updateUser(req.params.id, req.body, { avatar })
     return res.status(200).json({ message: 'Cập nhật người dùng thành công', data: user })
   } catch (error) {
+    if (req.file?.filename) {
+      await destroyImagesByPublicIds(req.file.filename)
+    }
     return next(error)
   }
 }
