@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getErrorMessage } from '../services/apiClient'
+import { normalizeEmail, validateEmail } from '../utils/validators'
 
 function LoginPage() {
   const { login } = useAuth()
@@ -16,15 +17,22 @@ function LoginPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!email.trim() || !password.trim()) {
-      setErrorMessage('Vui lòng nhập đầy đủ email và mật khẩu')
+
+    const emailError = validateEmail(email)
+    if (emailError) {
+      setErrorMessage(emailError)
+      return
+    }
+
+    if (!password.trim()) {
+      setErrorMessage('Vui lòng nhập mật khẩu')
       return
     }
 
     try {
       setIsSubmitting(true)
       setErrorMessage('')
-      await login({ email: email.trim(), password })
+      await login({ email: normalizeEmail(email), password })
       const nextPath = (location.state as { from?: string } | null)?.from ?? '/profile'
       navigate(nextPath)
     } catch (error) {

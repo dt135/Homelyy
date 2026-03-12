@@ -31,5 +31,7 @@ export const API_ENDPOINTS = {
     productDetail: '/admin/products/:id',
     orders: '/admin/orders',
     orderDetail: '/admin/orders/:id',
+    users: '/admin/users',
+    userDetail: '/admin/users/:id',
   },
 } as const

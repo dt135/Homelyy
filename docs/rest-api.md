@@ -70,6 +70,8 @@ Base URL: `/api`
 ### GET `/users/:id` (private/admin)
 
 ### PATCH `/users/:id` (private, MVP)
+- Chỉ `admin` hoặc chính chủ tài khoản mới được phép đọc/cập nhật.
+- Trường cập nhật hợp lệ: `fullName`, `phone`.
 
 ## Reviews
 
@@ -119,9 +121,32 @@ Authorization: Bearer <jwt_token>
 ### DELETE `/admin/orders/:id` (admin)
 - Xóa đơn hàng theo `id`.
 
+### GET `/admin/users` (admin)
+- Lấy danh sách người dùng để quản trị (không trả về mật khẩu).
+
+### POST `/admin/users` (admin)
+- Body mẫu:
+```json
+{
+  "fullName": "Nguyen Van A",
+  "email": "user@example.com",
+  "phone": "0900000001",
+  "role": "user",
+  "password": "user12345"
+}
+```
+
+### PATCH `/admin/users/:id` (admin)
+- Cho phép cập nhật: `fullName`, `email`, `phone`, `role`, `password`.
+- Nếu đổi `role` hoặc xóa user admin, hệ thống vẫn bắt buộc còn ít nhất 1 tài khoản admin.
+
+### DELETE `/admin/users/:id` (admin)
+- Không cho phép tự xóa tài khoản đang đăng nhập.
+
 ## Validation priorities
 - `email` must be valid format.
-- `password` min length 6.
+- `password` length 8..64, có ít nhất 1 chữ cái và 1 chữ số, không chứa khoảng trắng.
+- `phone` theo định dạng Việt Nam (`09xxxxxxxx` sau khi chuẩn hóa từ `+84`/`84`).
 - `quantity` >= 1.
 - `rating` in range 1..5.
 - `order.items` cannot be empty.

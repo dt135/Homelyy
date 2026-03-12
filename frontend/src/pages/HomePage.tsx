@@ -1,16 +1,11 @@
 import { useEffect, useState } from 'react'
 import BrandsSection from '../features/home/components/BrandsSection'
 import CtaSection from '../features/home/components/CtaSection'
-import FeaturedCategoriesSection from '../features/home/components/FeaturedCategoriesSection'
 import HeroBanner from '../features/home/components/HeroBanner'
 import ProductShowcaseSection from '../features/home/components/ProductShowcaseSection'
 import TrustHighlightsSection from '../features/home/components/TrustHighlightsSection'
 import { getErrorMessage } from '../services/apiClient'
-import {
-  brands,
-  categories,
-  trustHighlights,
-} from '../features/home/data/homeData'
+import { brands, trustHighlights } from '../features/home/data/homeData'
 import { fetchFeaturedProducts, fetchNewProducts } from '../services/productService'
 import type { Product } from '../types/product'
 import '../features/home/home.css'
@@ -44,7 +39,6 @@ function HomePage() {
     <section className="home-page">
       <HeroBanner />
       <TrustHighlightsSection items={trustHighlights} />
-      <FeaturedCategoriesSection items={categories} />
 
       {isLoading ? <div className="state-card">Đang tải sản phẩm nổi bật...</div> : null}
       {!isLoading && errorMessage ? <div className="state-card">{errorMessage}</div> : null}

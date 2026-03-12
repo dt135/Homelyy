@@ -36,6 +36,15 @@ async function getOrderManagement(_req, res, next) {
   }
 }
 
+async function getUserManagement(_req, res, next) {
+  try {
+    const users = await adminService.getUsersForAdmin()
+    return res.status(200).json({ message: 'Lấy danh sách người dùng quản trị thành công', data: users })
+  } catch (error) {
+    return next(error)
+  }
+}
+
 async function createCategory(req, res, next) {
   try {
     const createdCategory = await adminService.createCategoryForAdmin(req.body)
@@ -108,17 +117,48 @@ async function deleteOrder(req, res, next) {
   }
 }
 
+async function createUser(req, res, next) {
+  try {
+    const createdUser = await adminService.createUserForAdmin(req.body)
+    return res.status(201).json({ message: 'Tạo người dùng thành công', data: createdUser })
+  } catch (error) {
+    return next(error)
+  }
+}
+
+async function updateUser(req, res, next) {
+  try {
+    const updatedUser = await adminService.updateUserForAdmin(req.params.id, req.body, req.authUser.id)
+    return res.status(200).json({ message: 'Cập nhật người dùng thành công', data: updatedUser })
+  } catch (error) {
+    return next(error)
+  }
+}
+
+async function deleteUser(req, res, next) {
+  try {
+    const deletedUser = await adminService.deleteUserForAdmin(req.params.id, req.authUser.id)
+    return res.status(200).json({ message: 'Xóa người dùng thành công', data: deletedUser })
+  } catch (error) {
+    return next(error)
+  }
+}
+
 module.exports = {
   getDashboard,
   getCategoryManagement,
   getProductManagement,
   getOrderManagement,
+  getUserManagement,
   createCategory,
   updateCategory,
   deleteCategory,
   createProduct,
   updateProduct,
   deleteProduct,
+  createUser,
+  updateUser,
+  deleteUser,
   updateOrder,
   deleteOrder,
 }

@@ -4,6 +4,13 @@ import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getErrorMessage } from '../services/apiClient'
+import {
+  normalizeEmail,
+  normalizeWhitespace,
+  validateEmail,
+  validateFullName,
+  validatePassword,
+} from '../utils/validators'
 
 function RegisterPage() {
   const { register } = useAuth()
@@ -17,23 +24,32 @@ function RegisterPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (fullName.trim().length < 3) {
-      setErrorMessage('Họ và tên cần ít nhất 3 ký tự')
+    const fullNameError = validateFullName(fullName)
+    if (fullNameError) {
+      setErrorMessage(fullNameError)
       return
     }
-    if (!email.includes('@')) {
-      setErrorMessage('Định dạng email chưa hợp lệ')
+
+    const emailError = validateEmail(email)
+    if (emailError) {
+      setErrorMessage(emailError)
       return
     }
-    if (password.length < 6) {
-      setErrorMessage('Mật khẩu cần ít nhất 6 ký tự')
+
+    const passwordError = validatePassword(password)
+    if (passwordError) {
+      setErrorMessage(passwordError)
       return
     }
 
     try {
       setIsSubmitting(true)
       setErrorMessage('')
-      await register({ fullName: fullName.trim(), email: email.trim(), password })
+      await register({
+        fullName: normalizeWhitespace(fullName),
+        email: normalizeEmail(email),
+        password,
+      })
       navigate('/profile')
     } catch (error) {
       setErrorMessage(getErrorMessage(error))

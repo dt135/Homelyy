@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { fetchOrdersByUser } from '../services/orderService'
 import type { Order } from '../types/order'
+import { normalizePhone, normalizeWhitespace, validateFullName, validatePhone } from '../utils/validators'
 import { formatDate, formatOrderStatus } from '../utils/formatters'
 
 function ProfilePage() {
@@ -27,12 +28,24 @@ function ProfilePage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!fullName.trim()) {
-      setStatusMessage('Vui lòng nhập họ và tên')
+
+    const fullNameError = validateFullName(fullName)
+    if (fullNameError) {
+      setStatusMessage(fullNameError)
       return
     }
+
+    const phoneError = validatePhone(phone)
+    if (phoneError) {
+      setStatusMessage(phoneError)
+      return
+    }
+
     try {
-      await updateProfile({ fullName: fullName.trim(), phone: phone.trim() })
+      await updateProfile({
+        fullName: normalizeWhitespace(fullName),
+        phone: normalizePhone(phone),
+      })
       setStatusMessage('Cập nhật hồ sơ thành công')
     } catch {
       setStatusMessage('Có lỗi khi cập nhật hồ sơ')

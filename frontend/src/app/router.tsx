@@ -19,6 +19,7 @@ import ProductDetailPage from '../pages/ProductDetailPage'
 import ProductListPage from '../pages/ProductListPage'
 import ProfilePage from '../pages/ProfilePage'
 import RegisterPage from '../pages/RegisterPage'
+import UserManagementPage from '../pages/UserManagementPage'
 
 export const appRouter = createBrowserRouter([
   {
@@ -105,6 +106,10 @@ export const appRouter = createBrowserRouter([
               {
                 path: 'orders',
                 element: <OrderManagementPage />,
+              },
+              {
+                path: 'users',
+                element: <UserManagementPage />,
               },
             ],
           },

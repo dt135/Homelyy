@@ -13,6 +13,41 @@ export type AdminCategoryPayload = {
   name: string
 }
 
+export type AdminDashboardStats = {
+  totalUsers: number
+  totalProducts: number
+  totalCategories: number
+  pendingOrders: number
+  totalRevenue: number
+}
+
+export type AdminUser = {
+  id: string
+  fullName: string
+  email: string
+  role: 'user' | 'admin'
+  phone?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type AdminUserPayload = {
+  id?: string
+  fullName: string
+  email: string
+  phone?: string
+  role: 'user' | 'admin'
+  password: string
+}
+
+export type AdminUserUpdatePayload = {
+  fullName?: string
+  email?: string
+  phone?: string
+  role?: 'user' | 'admin'
+  password?: string
+}
+
 export type AdminProductPayload = {
   id?: string
   slug?: string
@@ -36,6 +71,10 @@ export async function fetchAdminCategories(): Promise<AdminCategory[]> {
   return request<AdminCategory[]>(API_ENDPOINTS.admin.categories)
 }
 
+export async function fetchAdminDashboardStats(): Promise<AdminDashboardStats> {
+  return request<AdminDashboardStats>(API_ENDPOINTS.admin.dashboard)
+}
+
 export async function createAdminCategory(payload: AdminCategoryPayload): Promise<AdminCategory> {
   return request<AdminCategory>(API_ENDPOINTS.admin.categories, {
     method: 'POST',
@@ -55,6 +94,30 @@ export async function updateAdminCategory(
 
 export async function deleteAdminCategory(categoryId: string): Promise<AdminCategory> {
   return request<AdminCategory>(API_ENDPOINTS.admin.categoryDetail.replace(':id', categoryId), {
+    method: 'DELETE',
+  })
+}
+
+export async function fetchAdminUsers(): Promise<AdminUser[]> {
+  return request<AdminUser[]>(API_ENDPOINTS.admin.users)
+}
+
+export async function createAdminUser(payload: AdminUserPayload): Promise<AdminUser> {
+  return request<AdminUser>(API_ENDPOINTS.admin.users, {
+    method: 'POST',
+    body: payload,
+  })
+}
+
+export async function updateAdminUser(userId: string, payload: AdminUserUpdatePayload): Promise<AdminUser> {
+  return request<AdminUser>(API_ENDPOINTS.admin.userDetail.replace(':id', userId), {
+    method: 'PATCH',
+    body: payload,
+  })
+}
+
+export async function deleteAdminUser(userId: string): Promise<AdminUser> {
+  return request<AdminUser>(API_ENDPOINTS.admin.userDetail.replace(':id', userId), {
     method: 'DELETE',
   })
 }

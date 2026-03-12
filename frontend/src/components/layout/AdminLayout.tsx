@@ -4,6 +4,7 @@ const adminNavigation = [
   { to: '/admin/products', label: 'Quản lý sản phẩm' },
   { to: '/admin/categories', label: 'Quản lý danh mục' },
   { to: '/admin/orders', label: 'Quản lý đơn hàng' },
+  { to: '/admin/users', label: 'Quản lý người dùng' },
 ]
 
 function AdminLayout() {

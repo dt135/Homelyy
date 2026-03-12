@@ -1,12 +1,5 @@
 import { Link } from 'react-router-dom'
 
-const voiceCommands = [
-  'vào trang chủ',
-  'mở trang sản phẩm',
-  'tìm nồi chiên không dầu',
-  'mở giỏ hàng',
-]
-
 const trustBadges = ['Chính hãng 100%', 'Đổi trả 30 ngày', 'Hỗ trợ 7 ngày/tuần']
 
 function HeroBanner() {
@@ -36,17 +29,6 @@ function HeroBanner() {
         </div>
       </div>
 
-      <aside className="voice-preview" aria-label="Gợi ý lệnh giọng nói">
-        <p className="voice-preview-label">Lệnh giọng nói sẵn sàng</p>
-        <ul>
-          {voiceCommands.map((command) => (
-            <li key={command}>
-              <span className="dot" />
-              {command}
-            </li>
-          ))}
-        </ul>
-      </aside>
     </section>
   )
 }

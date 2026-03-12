@@ -1,40 +1,55 @@
 import { useEffect, useState } from 'react'
-import { fetchAllOrders } from '../services/orderService'
-import { mockProducts } from '../services/mock/data/products'
-import type { Order } from '../types/order'
+import { fetchAdminDashboardStats, type AdminDashboardStats } from '../services/adminService'
+
+const initialStats: AdminDashboardStats = {
+  totalUsers: 0,
+  totalProducts: 0,
+  totalCategories: 0,
+  pendingOrders: 0,
+  totalRevenue: 0,
+}
 
 function AdminDashboardPage() {
-  const [orders, setOrders] = useState<Order[]>([])
+  const [stats, setStats] = useState<AdminDashboardStats>(initialStats)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    fetchAllOrders()
-      .then((payload) => setOrders(payload))
-      .catch(() => setOrders([]))
+    setIsLoading(true)
+    fetchAdminDashboardStats()
+      .then((payload) => setStats(payload))
+      .catch(() => setStats(initialStats))
+      .finally(() => setIsLoading(false))
   }, [])
-
-  const pendingOrders = orders.filter((order) => order.status === 'pending').length
-  const totalRevenue = orders.reduce((total, order) => total + order.totalAmount, 0)
 
   return (
     <section className="page-stack reveal-up">
       <p className="eyebrow">Quản trị</p>
       <h1 className="page-title">Bảng điều khiển quản trị</h1>
 
+      {isLoading ? <div className="state-card">Đang tải số liệu quản trị...</div> : null}
+
       <div className="placeholder-grid">
         <article className="placeholder-card">
+          <h2>Tổng người dùng</h2>
+          <p className="admin-kpi">{stats.totalUsers}</p>
+        </article>
+        <article className="placeholder-card">
           <h2>Tổng sản phẩm</h2>
-          <p className="admin-kpi">{mockProducts.length}</p>
+          <p className="admin-kpi">{stats.totalProducts}</p>
+        </article>
+        <article className="placeholder-card">
+          <h2>Tổng danh mục</h2>
+          <p className="admin-kpi">{stats.totalCategories}</p>
         </article>
         <article className="placeholder-card">
           <h2>Đơn chờ xử lý</h2>
-          <p className="admin-kpi">{pendingOrders}</p>
+          <p className="admin-kpi">{stats.pendingOrders}</p>
         </article>
         <article className="placeholder-card">
-          <h2>Doanh thu mock</h2>
-          <p className="admin-kpi">{totalRevenue.toLocaleString('vi-VN')} VND</p>
+          <h2>Tổng doanh thu</h2>
+          <p className="admin-kpi">{stats.totalRevenue.toLocaleString('vi-VN')} VND</p>
         </article>
       </div>
-
     </section>
   )
 }

@@ -3,6 +3,20 @@ const Order = require('../models/OrderModel')
 const Product = require('../models/ProductModel')
 const User = require('../models/UserModel')
 const { sanitizeDoc, sanitizeDocs } = require('../utils/mongoSanitize')
+const {
+  normalizeEmail,
+  normalizePhone,
+  validateEmail,
+  validateFullName,
+  validatePassword,
+  validateRole,
+} = require('../utils/validation')
+
+function createHttpError(message, statusCode) {
+  const error = new Error(message)
+  error.statusCode = statusCode
+  return error
+}
 
 function toSlug(value) {
   return String(value || '')
@@ -49,6 +63,38 @@ function normalizeSpecs(specs) {
   return Object.fromEntries(
     Object.entries(specs).map(([key, value]) => [String(key), String(value)]),
   )
+}
+
+function parseBooleanInput(value) {
+  if (typeof value === 'boolean') {
+    return value
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    if (normalized === 'true') {
+      return true
+    }
+    if (normalized === 'false') {
+      return false
+    }
+  }
+
+  return Boolean(value)
+}
+
+function normalizeCustomId(value, prefix) {
+  const raw = String(value || '').trim()
+
+  if (!raw) {
+    return `${prefix}-${Date.now()}`
+  }
+
+  if (!/^[a-zA-Z0-9-]{3,50}$/.test(raw)) {
+    throw createHttpError('ID chỉ được chứa chữ, số, dấu gạch ngang (3-50 ký tự)', 422)
+  }
+
+  return raw
 }
 
 async function getDashboardStats() {
@@ -155,6 +201,173 @@ async function getOrdersForAdmin() {
   return sanitizeDocs(orders)
 }
 
+async function getUsersForAdmin() {
+  const users = await User.find()
+    .select('id fullName email role phone createdAt updatedAt')
+    .sort({ createdAt: -1 })
+  return sanitizeDocs(users)
+}
+
+async function createUserForAdmin(payload) {
+  const input = payload && typeof payload === 'object' ? payload : {}
+
+  const fullName = validateFullName(input.fullName)
+  const email = validateEmail(normalizeEmail(input.email))
+  const password = validatePassword(input.password)
+  const role = validateRole(input.role, { defaultToUser: true })
+  const phone = normalizePhone(input.phone)
+  const id = normalizeCustomId(input.id, role === 'admin' ? 'admin' : 'user')
+
+  const [existingById, existingByEmail] = await Promise.all([
+    User.findOne({ id }).select('id'),
+    User.findOne({ email }).select('id'),
+  ])
+
+  if (existingById) {
+    throw createHttpError('ID người dùng đã tồn tại', 409)
+  }
+
+  if (existingByEmail) {
+    throw createHttpError('Email đã tồn tại', 409)
+  }
+
+  const createdUser = await User.create({
+    id,
+    fullName,
+    email,
+    password,
+    role,
+    phone,
+  })
+
+  return sanitizeDoc({
+    id: createdUser.id,
+    fullName: createdUser.fullName,
+    email: createdUser.email,
+    role: createdUser.role,
+    phone: createdUser.phone,
+    createdAt: createdUser.createdAt,
+    updatedAt: createdUser.updatedAt,
+  })
+}
+
+async function updateUserForAdmin(userId, payload, authUserId) {
+  const input = payload && typeof payload === 'object' ? payload : {}
+  const user = await User.findOne({ id: userId })
+  if (!user) {
+    throw createHttpError('Không tìm thấy người dùng để cập nhật', 404)
+  }
+
+  const shouldUpdateFullName = Object.prototype.hasOwnProperty.call(input, 'fullName')
+  const shouldUpdateEmail = Object.prototype.hasOwnProperty.call(input, 'email')
+  const shouldUpdatePhone = Object.prototype.hasOwnProperty.call(input, 'phone')
+  const shouldUpdateRole = Object.prototype.hasOwnProperty.call(input, 'role')
+  const shouldUpdatePassword = Object.prototype.hasOwnProperty.call(input, 'password')
+
+  if (
+    !shouldUpdateFullName &&
+    !shouldUpdateEmail &&
+    !shouldUpdatePhone &&
+    !shouldUpdateRole &&
+    !shouldUpdatePassword
+  ) {
+    throw createHttpError('Không có dữ liệu hợp lệ để cập nhật', 422)
+  }
+
+  if (shouldUpdateFullName) {
+    user.fullName = validateFullName(input.fullName)
+  }
+
+  if (shouldUpdateEmail) {
+    const nextEmail = validateEmail(normalizeEmail(input.email))
+    const duplicateEmailUser = await User.findOne({
+      id: { $ne: userId },
+      email: nextEmail,
+    }).select('id')
+
+    if (duplicateEmailUser) {
+      throw createHttpError('Email đã tồn tại', 409)
+    }
+
+    user.email = nextEmail
+  }
+
+  if (shouldUpdatePhone) {
+    user.phone = normalizePhone(input.phone)
+  }
+
+  if (shouldUpdatePassword) {
+    user.password = validatePassword(input.password)
+  }
+
+  if (shouldUpdateRole) {
+    const nextRole = validateRole(input.role)
+
+    if (authUserId === userId && nextRole !== 'admin') {
+      throw createHttpError('Không thể tự hạ quyền tài khoản đang đăng nhập', 422)
+    }
+
+    if (user.role === 'admin' && nextRole !== 'admin') {
+      const remainingAdmins = await User.countDocuments({
+        role: 'admin',
+        id: { $ne: userId },
+      })
+
+      if (remainingAdmins < 1) {
+        throw createHttpError('Hệ thống phải luôn có ít nhất 1 tài khoản admin', 422)
+      }
+    }
+
+    user.role = nextRole
+  }
+
+  await user.save()
+
+  return sanitizeDoc({
+    id: user.id,
+    fullName: user.fullName,
+    email: user.email,
+    role: user.role,
+    phone: user.phone,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  })
+}
+
+async function deleteUserForAdmin(userId, authUserId) {
+  if (userId === authUserId) {
+    throw createHttpError('Không thể tự xóa tài khoản đang đăng nhập', 422)
+  }
+
+  const user = await User.findOne({ id: userId })
+  if (!user) {
+    throw createHttpError('Không tìm thấy người dùng để xóa', 404)
+  }
+
+  if (user.role === 'admin') {
+    const remainingAdmins = await User.countDocuments({
+      role: 'admin',
+      id: { $ne: userId },
+    })
+
+    if (remainingAdmins < 1) {
+      throw createHttpError('Không thể xóa tài khoản admin cuối cùng', 422)
+    }
+  }
+
+  await user.deleteOne()
+
+  return sanitizeDoc({
+    id: user.id,
+    fullName: user.fullName,
+    email: user.email,
+    role: user.role,
+    phone: user.phone,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  })
+}
+
 async function createProductForAdmin(payload) {
   const name = String(payload.name || '').trim()
   const category = String(payload.category || '').trim()
@@ -189,8 +402,8 @@ async function createProductForAdmin(payload) {
     thumbnail: String(payload.thumbnail || name.toUpperCase()).trim(),
     images: Array.isArray(payload.images) ? payload.images.map((item) => String(item)) : [],
     specs: normalizeSpecs(payload.specs),
-    isFeatured: Boolean(payload.isFeatured),
-    isNew: Boolean(payload.isNew),
+    isFeatured: parseBooleanInput(payload.isFeatured),
+    isNew: parseBooleanInput(payload.isNew),
   })
 
   return sanitizeDoc(product)
@@ -239,10 +452,10 @@ async function updateProductForAdmin(productId, payload) {
     product.specs = normalizeSpecs(payload.specs)
   }
   if (payload.isFeatured != null) {
-    product.isFeatured = Boolean(payload.isFeatured)
+    product.isFeatured = parseBooleanInput(payload.isFeatured)
   }
   if (payload.isNew != null) {
-    product.isNew = Boolean(payload.isNew)
+    product.isNew = parseBooleanInput(payload.isNew)
   }
 
   if (payload.slug != null || payload.name != null) {
@@ -301,9 +514,13 @@ module.exports = {
   getCategoriesForAdmin,
   getProductsForAdmin,
   getOrdersForAdmin,
+  getUsersForAdmin,
   createCategoryForAdmin,
   updateCategoryForAdmin,
   deleteCategoryForAdmin,
+  createUserForAdmin,
+  updateUserForAdmin,
+  deleteUserForAdmin,
   createProductForAdmin,
   updateProductForAdmin,
   deleteProductForAdmin,
