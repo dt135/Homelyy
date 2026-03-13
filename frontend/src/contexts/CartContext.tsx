@@ -1,8 +1,9 @@
 import { createContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { getCartItems, persistCartItems } from '../services/cartService'
-import { mockProducts } from '../services/mock/data/products'
+import { fetchProducts } from '../services/productService'
 import type { CartItem } from '../types/cart'
+import type { Product } from '../types/product'
 
 export type CartLineItem = CartItem & {
   name: string
@@ -31,9 +32,32 @@ type CartProviderProps = {
 
 function CartProvider({ children }: CartProviderProps) {
   const [items, setItems] = useState<CartItem[]>([])
+  const [products, setProducts] = useState<Product[]>([])
 
   useEffect(() => {
     setItems(getCartItems())
+  }, [])
+
+  useEffect(() => {
+    let isMounted = true
+
+    fetchProducts()
+      .then((payload) => {
+        if (!isMounted) {
+          return
+        }
+        setProducts(payload)
+      })
+      .catch(() => {
+        if (!isMounted) {
+          return
+        }
+        setProducts([])
+      })
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   useEffect(() => {
@@ -43,7 +67,7 @@ function CartProvider({ children }: CartProviderProps) {
   const value = useMemo<CartContextValue>(() => {
     const lineItems = items
       .map((item) => {
-        const product = mockProducts.find((entry) => entry.id === item.productId)
+        const product = products.find((entry) => entry.id === item.productId)
         if (!product) {
           return null
         }
@@ -103,7 +127,7 @@ function CartProvider({ children }: CartProviderProps) {
         setItems([])
       },
     }
-  }, [items])
+  }, [items, products])
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }

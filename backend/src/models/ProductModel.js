@@ -1,5 +1,18 @@
 const mongoose = require('mongoose')
 
+const productMediaSchema = new mongoose.Schema(
+  {
+    url: { type: String, required: true, trim: true },
+    publicId: { type: String, default: '' },
+    alt: { type: String, default: '' },
+    position: { type: Number, default: 0, min: 0 },
+    isPrimary: { type: Boolean, default: false },
+  },
+  {
+    _id: false,
+  },
+)
+
 const productSchema = new mongoose.Schema(
   {
     id: { type: String, required: true, unique: true, index: true },
@@ -15,6 +28,7 @@ const productSchema = new mongoose.Schema(
     sold: { type: Number, default: 0, min: 0 },
     thumbnail: { type: String, required: true, trim: true },
     thumbnailPublicId: { type: String, default: '' },
+    media: { type: [productMediaSchema], default: [] },
     images: { type: [String], default: [] },
     imagePublicIds: { type: [String], default: [] },
     specs: {

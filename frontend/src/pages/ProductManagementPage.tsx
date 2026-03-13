@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
   createAdminProduct,
@@ -8,6 +8,7 @@ import {
 } from '../services/adminService'
 import { getErrorMessage } from '../services/apiClient'
 import type { Product } from '../types/product'
+import { isLikelyImageUrl } from '../utils/images'
 import { vndFormatter } from '../utils/formatters'
 
 type ProductForm = {
@@ -59,6 +60,13 @@ function parseSpecs(specsText: string): Record<string, string> {
     }, {})
 }
 
+function parseImageList(imagesText: string): string[] {
+  return imagesText
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
 function mapProductToForm(product: Product): ProductForm {
   return {
     id: product.id,
@@ -90,6 +98,9 @@ function ProductManagementPage() {
   const [form, setForm] = useState<ProductForm>(initialForm)
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [uploadedImagePreviewUrls, setUploadedImagePreviewUrls] = useState<string[]>([])
+  const [selectedUploadedImageIndex, setSelectedUploadedImageIndex] = useState<number | null>(null)
+  const formRef = useRef<HTMLFormElement | null>(null)
 
   async function loadProducts() {
     try {
@@ -117,6 +128,25 @@ function ProductManagementPage() {
     [products, keyword],
   )
 
+  const existingImageChoices = useMemo(() => {
+    const merged = [form.thumbnail.trim(), ...parseImageList(form.imagesText)]
+    return [...new Set(merged.filter(Boolean))]
+  }, [form.imagesText, form.thumbnail])
+
+  useEffect(() => {
+    if (imageFiles.length === 0 || typeof URL === 'undefined') {
+      setUploadedImagePreviewUrls([])
+      return
+    }
+
+    const objectUrls = imageFiles.map((file) => URL.createObjectURL(file))
+    setUploadedImagePreviewUrls(objectUrls)
+
+    return () => {
+      objectUrls.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [imageFiles])
+
   function updateField<K extends keyof ProductForm>(key: K, value: ProductForm[K]) {
     setForm((previous) => ({ ...previous, [key]: value }))
   }
@@ -126,6 +156,21 @@ function ProductManagementPage() {
     setForm(initialForm)
     setThumbnailFile(null)
     setImageFiles([])
+    setUploadedImagePreviewUrls([])
+    setSelectedUploadedImageIndex(null)
+  }
+
+  function handleThumbnailFileChange(file: File | null) {
+    setThumbnailFile(file)
+    if (file) {
+      setSelectedUploadedImageIndex(null)
+    }
+  }
+
+  function handleImageFilesChange(files: File[]) {
+    setImageFiles(files)
+    setThumbnailFile(null)
+    setSelectedUploadedImageIndex(files.length > 0 ? 0 : null)
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -185,6 +230,14 @@ function ProductManagementPage() {
         formData.append('isFeatured', String(payload.isFeatured))
         formData.append('isNew', String(payload.isNew))
 
+        if (
+          selectedUploadedImageIndex != null &&
+          selectedUploadedImageIndex >= 0 &&
+          selectedUploadedImageIndex < imageFiles.length
+        ) {
+          formData.append('thumbnailImageIndex', String(selectedUploadedImageIndex))
+        }
+
         if (thumbnailFile) {
           formData.append('thumbnail', thumbnailFile)
         }
@@ -237,6 +290,10 @@ function ProductManagementPage() {
     setForm(mapProductToForm(product))
     setThumbnailFile(null)
     setImageFiles([])
+    setSelectedUploadedImageIndex(null)
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
   }
 
   return (
@@ -244,7 +301,7 @@ function ProductManagementPage() {
       <p className="eyebrow">Quản trị sản phẩm</p>
       <h1 className="page-title">Quản lý sản phẩm</h1>
 
-      <form className="placeholder-card" onSubmit={handleSubmit}>
+      <form ref={formRef} className="placeholder-card admin-product-form" onSubmit={handleSubmit}>
         <h2>{editingId ? 'Cập nhật sản phẩm' : 'Tạo sản phẩm mới'}</h2>
 
         <div className="placeholder-grid">
@@ -312,7 +369,13 @@ function ProductManagementPage() {
 
           <label className="field">
             <span>Thumbnail</span>
-            <input value={form.thumbnail} onChange={(event) => updateField('thumbnail', event.target.value)} />
+            <input
+              value={form.thumbnail}
+              onChange={(event) => {
+                updateField('thumbnail', event.target.value)
+                setSelectedUploadedImageIndex(null)
+              }}
+            />
           </label>
 
           <label className="field">
@@ -320,7 +383,7 @@ function ProductManagementPage() {
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp"
-              onChange={(event) => setThumbnailFile(event.target.files?.[0] ?? null)}
+              onChange={(event) => handleThumbnailFileChange(event.target.files?.[0] ?? null)}
             />
           </label>
         </div>
@@ -341,9 +404,66 @@ function ProductManagementPage() {
             type="file"
             accept="image/png,image/jpeg,image/webp"
             multiple
-            onChange={(event) => setImageFiles(Array.from(event.target.files || []))}
+            onChange={(event) => handleImageFilesChange(Array.from(event.target.files || []))}
           />
         </label>
+
+        {existingImageChoices.length > 0 ? (
+          <div className="field">
+            <span>Chọn ảnh hiển thị từ ảnh hiện có</span>
+            <div className="product-image-choice-grid">
+              {existingImageChoices.map((imageUrl) => {
+                const isActive = selectedUploadedImageIndex == null && form.thumbnail.trim() === imageUrl
+
+                return (
+                  <button
+                    key={`existing-${imageUrl}`}
+                    type="button"
+                    className={`product-image-choice ${isActive ? 'is-active' : ''}`}
+                    onClick={() => {
+                      updateField('thumbnail', imageUrl)
+                      setThumbnailFile(null)
+                      setSelectedUploadedImageIndex(null)
+                    }}
+                    title="Đặt làm ảnh hiển thị"
+                  >
+                    {isLikelyImageUrl(imageUrl) ? (
+                      <img src={imageUrl} alt="Ảnh sản phẩm" className="product-image-choice-thumb" />
+                    ) : (
+                      <span className="product-image-choice-fallback">{imageUrl}</span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        {uploadedImagePreviewUrls.length > 0 ? (
+          <div className="field">
+            <span>Chọn ảnh hiển thị từ ảnh vừa tải lên</span>
+            <div className="product-image-choice-grid">
+              {uploadedImagePreviewUrls.map((imageUrl, index) => {
+                const isActive = selectedUploadedImageIndex === index
+
+                return (
+                  <button
+                    key={`uploaded-${imageUrl}`}
+                    type="button"
+                    className={`product-image-choice ${isActive ? 'is-active' : ''}`}
+                    onClick={() => {
+                      setSelectedUploadedImageIndex(index)
+                      setThumbnailFile(null)
+                    }}
+                    title="Đặt làm ảnh hiển thị"
+                  >
+                    <img src={imageUrl} alt={`Ảnh tải lên ${index + 1}`} className="product-image-choice-thumb" />
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ) : null}
 
         <label className="field">
           <span>Thông số kỹ thuật (mỗi dòng: Tên: Giá trị)</span>

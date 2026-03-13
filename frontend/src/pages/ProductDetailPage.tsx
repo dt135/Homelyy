@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useCart } from '../hooks/useCart'
 import { getErrorMessage } from '../services/apiClient'
 import { fetchProductById, fetchRelatedProducts } from '../services/productService'
-import type { Product } from '../types/product'
+import type { Product, ProductMedia } from '../types/product'
 import { isLikelyImageUrl } from '../utils/images'
 import { vndFormatter } from '../utils/formatters'
 
@@ -14,6 +14,47 @@ function ProductDetailPage() {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0)
+
+  const galleryMedia = useMemo<ProductMedia[]>(() => {
+    if (!product) {
+      return []
+    }
+
+    if (Array.isArray(product.media) && product.media.length > 0) {
+      return [...product.media]
+        .map((item, index) => ({
+          ...item,
+          url: String(item.url || '').trim(),
+          position: Number.isFinite(Number(item.position)) ? Number(item.position) : index,
+          alt: String(item.alt || product.name || '').trim(),
+          isPrimary: Boolean(item.isPrimary),
+        }))
+        .filter((item) => item.url)
+        .sort((a, b) => Number(a.position || 0) - Number(b.position || 0))
+    }
+
+    const mergedImages = [product.thumbnail, ...(product.images ?? [])]
+      .map((item) => item.trim())
+      .filter(Boolean)
+
+    const uniqueImages = [...new Set(mergedImages)]
+
+    return uniqueImages.map((url, index) => ({
+      url,
+      position: index,
+      alt: product.name,
+      isPrimary: index === 0,
+    }))
+  }, [product])
+
+  const defaultMediaIndex = useMemo(() => {
+    const primaryIndex = galleryMedia.findIndex((item) => item.isPrimary)
+    return primaryIndex >= 0 ? primaryIndex : 0
+  }, [galleryMedia])
+
+  const displayedMedia = galleryMedia[activeMediaIndex] || galleryMedia[defaultMediaIndex]
+  const displayedImage = displayedMedia?.url || product?.thumbnail || ''
 
   useEffect(() => {
     if (!productId) {
@@ -38,6 +79,10 @@ function ProductDetailPage() {
       })
   }, [productId])
 
+  useEffect(() => {
+    setActiveMediaIndex(defaultMediaIndex)
+  }, [defaultMediaIndex])
+
   return (
     <section className="page-stack reveal-up">
       <p className="eyebrow">Chi tiết sản phẩm</p>
@@ -49,12 +94,46 @@ function ProductDetailPage() {
       {!isLoading && !errorMessage && product ? (
         <>
           <div className="product-detail-card">
-            <div className="product-detail-media">
-              {isLikelyImageUrl(product.thumbnail) ? (
-                <img src={product.thumbnail} alt={product.name} className="product-detail-media-image" />
-              ) : (
-                product.thumbnail
-              )}
+            <div className="product-detail-media-column">
+              <div className="product-detail-media">
+                {isLikelyImageUrl(displayedImage) ? (
+                  <img
+                    src={displayedImage}
+                    alt={displayedMedia?.alt || product.name}
+                    className="product-detail-media-image"
+                  />
+                ) : (
+                  displayedImage
+                )}
+              </div>
+
+              {galleryMedia.length > 1 ? (
+                <div className="product-gallery-grid">
+                  {galleryMedia.map((item, index) => {
+                    const isActive = index === activeMediaIndex
+
+                    return (
+                      <button
+                        key={`${item.url}-${index}`}
+                        type="button"
+                        className={`product-gallery-item ${isActive ? 'is-active' : ''}`}
+                        onClick={() => setActiveMediaIndex(index)}
+                        aria-label={`Xem ảnh ${index + 1}`}
+                      >
+                        {isLikelyImageUrl(item.url) ? (
+                          <img
+                            src={item.url}
+                            alt={item.alt || `Ảnh ${index + 1} của ${product.name}`}
+                            className="product-gallery-image"
+                          />
+                        ) : (
+                          <span className="product-gallery-fallback">Ảnh {index + 1}</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : null}
             </div>
             <div className="product-detail-content">
               <h2>{product.name}</h2>

@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { categoryOptions } from '../../services/mock/data/categories'
+import { fetchCatalogFilters } from '../../services/productService'
 import { parseVoiceCommand } from './parser'
 
 type VoiceStatus = 'idle' | 'listening' | 'success' | 'error' | 'unsupported'
@@ -49,7 +49,7 @@ function getRecognitionConstructor(): SpeechRecognitionConstructorLike | null {
   return customWindow.SpeechRecognition ?? customWindow.webkitSpeechRecognition ?? null
 }
 
-function resolveCategoryName(rawCategory: string): string {
+function resolveCategoryName(rawCategory: string, categoryOptions: string[]): string {
   const normalizedInput = normalize(rawCategory)
   const matched = categoryOptions.find((category) => normalize(category) === normalizedInput)
   return matched ?? rawCategory
@@ -62,11 +62,34 @@ export function useVoiceCommands() {
 
   const [status, setStatus] = useState<VoiceStatus>('idle')
   const [transcript, setTranscript] = useState('')
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([])
   const [feedback, setFeedback] = useState(
     'Nhấn nút mic, nói ngắn gọn và rõ ràng để nhận diện chính xác hơn.',
   )
 
   const isSupported = useMemo(() => getRecognitionConstructor() !== null, [])
+
+  useEffect(() => {
+    let isMounted = true
+
+    fetchCatalogFilters()
+      .then((payload) => {
+        if (!isMounted) {
+          return
+        }
+        setCategoryOptions(payload.categories)
+      })
+      .catch(() => {
+        if (!isMounted) {
+          return
+        }
+        setCategoryOptions([])
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   function applyCommand(rawTranscript: string) {
     const intent = parseVoiceCommand(rawTranscript)
@@ -100,7 +123,7 @@ export function useVoiceCommands() {
         setStatus('success')
         return
       case 'filterCategory': {
-        const resolvedCategory = resolveCategoryName(intent.category)
+        const resolvedCategory = resolveCategoryName(intent.category, categoryOptions)
         params.set('category', resolvedCategory)
         navigate(`/products?${params.toString()}`)
         setFeedback(`Đã lọc danh mục: ${resolvedCategory}`)

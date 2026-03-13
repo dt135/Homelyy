@@ -1,3 +1,11 @@
+export type ProductMedia = {
+  url: string
+  publicId?: string
+  alt?: string
+  position?: number
+  isPrimary?: boolean
+}
+
 export type Product = {
   id: string
   name: string
@@ -12,6 +20,7 @@ export type Product = {
   sold: number
   thumbnail: string
   thumbnailPublicId?: string
+  media?: ProductMedia[]
   images: string[]
   imagePublicIds?: string[]
   specs: Record<string, string>

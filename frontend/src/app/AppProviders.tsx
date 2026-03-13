@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import AuthProvider from '../contexts/AuthContext'
 import CartProvider from '../contexts/CartContext'
+import ThemeProvider from '../contexts/ThemeContext'
 
 type AppProvidersProps = {
   children: ReactNode
@@ -8,9 +9,11 @@ type AppProvidersProps = {
 
 function AppProviders({ children }: AppProvidersProps) {
   return (
-    <AuthProvider>
-      <CartProvider>{children}</CartProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <CartProvider>{children}</CartProvider>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
 

@@ -6,7 +6,6 @@ Homelyy là dự án fullstack portfolio cho website bán đồ điện gia dụ
 - Frontend React: trang chủ, danh sách sản phẩm, chi tiết sản phẩm, giỏ hàng, checkout.
 - Xác thực và phân quyền: đăng nhập, đăng ký, profile, lịch sử đơn hàng, route admin.
 - Voice Control: điều hướng, tìm kiếm và lọc sản phẩm bằng giọng nói.
-- Mock API có thể chuyển sang backend thật qua biến môi trường.
 
 ## Tech stack
 - Frontend: React 19, TypeScript, React Router, Context API, Vite.
@@ -38,13 +37,9 @@ docker compose up --build
 - Frontend: sao chép `frontend/.env.example` thành `frontend/.env`
 - Backend: sao chép `backend/.env.example` thành `backend/.env`
 
-### Dùng API thật cho Product Detail/Home
+### Kết nối API
 - Trong `frontend/.env`, giữ:
   - `VITE_API_BASE_URL=http://localhost:4000/api`
-  - `VITE_USE_MOCK_API=false`
-- Backend đã hỗ trợ dữ liệu thật từ MongoDB Atlas cho:
-  - `GET /api/products`
-  - `GET /api/products/:id`
 
 ### MongoDB Atlas
 - Dự án backend đã chuyển sang MongoDB Atlas bằng `mongoose`.

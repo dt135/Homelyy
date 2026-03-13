@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
   createAdminCategory,
@@ -27,6 +27,7 @@ function CategoryManagementPage() {
   const [keyword, setKeyword] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<CategoryForm>(initialForm)
+  const formRef = useRef<HTMLFormElement | null>(null)
 
   async function loadCategories() {
     try {
@@ -89,6 +90,9 @@ function CategoryManagementPage() {
   function startEdit(category: AdminCategory) {
     setEditingId(category.id)
     setForm({ id: category.id, name: category.name })
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
   }
 
   async function handleDelete(categoryId: string) {
@@ -115,7 +119,7 @@ function CategoryManagementPage() {
       <p className="eyebrow">Quản trị danh mục</p>
       <h1 className="page-title">Quản lý danh mục</h1>
 
-      <form className="placeholder-card" onSubmit={handleSubmit}>
+      <form ref={formRef} className="placeholder-card admin-edit-form" onSubmit={handleSubmit}>
         <h2>{editingId ? 'Cập nhật danh mục' : 'Tạo danh mục mới'}</h2>
 
         <div className="placeholder-grid">

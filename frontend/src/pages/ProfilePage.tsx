@@ -1,11 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { fetchOrdersByUser } from '../services/orderService'
-import type { Order } from '../types/order'
 import { normalizePhone, normalizeWhitespace, validateFullName, validatePhone } from '../utils/validators'
-import { formatDate, formatOrderStatus } from '../utils/formatters'
 
 function ProfilePage() {
   const { user, updateProfile } = useAuth()
@@ -13,7 +9,6 @@ function ProfilePage() {
   const [phone, setPhone] = useState(user?.phone ?? '')
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('')
-  const [orders, setOrders] = useState<Order[]>([])
   const [statusMessage, setStatusMessage] = useState('')
 
   const avatarPreview = avatarPreviewUrl || user?.avatarUrl || ''
@@ -36,13 +31,6 @@ function ProfilePage() {
     setFullName(user?.fullName ?? '')
     setPhone(user?.phone ?? '')
     setAvatarFile(null)
-    if (!user) {
-      return
-    }
-
-    fetchOrdersByUser(user.id)
-      .then((payload) => setOrders(payload))
-      .catch(() => setOrders([]))
   }, [user])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -113,22 +101,6 @@ function ProfilePage() {
           </button>
           {statusMessage ? <p className="catalog-muted">{statusMessage}</p> : null}
         </form>
-
-        <article className="placeholder-card">
-          <h2>Lịch sử đơn hàng</h2>
-          {orders.length === 0 ? <p>Bạn chưa có đơn hàng nào.</p> : null}
-          {orders.slice(0, 3).map((order) => (
-            <div key={order.id} className="summary-row">
-              <span>
-                {order.id} - {formatDate(order.createdAt)}
-              </span>
-              <strong>{formatOrderStatus(order.status)}</strong>
-            </div>
-          ))}
-          <Link to="/orders" className="inline-link">
-            Xem toàn bộ đơn hàng
-          </Link>
-        </article>
       </div>
     </section>
   )

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import {
@@ -65,6 +65,7 @@ function UserManagementPage() {
   const [keyword, setKeyword] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<UserForm>(initialForm)
+  const formRef = useRef<HTMLFormElement | null>(null)
 
   async function loadUsers() {
     try {
@@ -171,6 +172,9 @@ function UserManagementPage() {
   function startEdit(user: AdminUser) {
     setEditingId(user.id)
     setForm(mapUserToForm(user))
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
   }
 
   async function handleDelete(targetUserId: string) {
@@ -197,7 +201,7 @@ function UserManagementPage() {
       <p className="eyebrow">Quản trị người dùng</p>
       <h1 className="page-title">Quản lý người dùng</h1>
 
-      <form className="placeholder-card" onSubmit={handleSubmit}>
+      <form ref={formRef} className="placeholder-card admin-edit-form" onSubmit={handleSubmit}>
         <h2>{editingId ? 'Cập nhật người dùng' : 'Tạo tài khoản người dùng'}</h2>
 
         <div className="placeholder-grid">

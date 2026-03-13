@@ -1,6 +1,6 @@
 import { API_ENDPOINTS } from '../constants/endpoints'
 import type { Order } from '../types/order'
-import type { Product } from '../types/product'
+import type { Product, ProductMedia } from '../types/product'
 import { request } from './httpClient'
 
 export type AdminCategory = {
@@ -63,6 +63,7 @@ export type AdminProductPayload = {
   sold?: number
   thumbnail: string
   thumbnailPublicId?: string
+  media?: ProductMedia[]
   images?: string[]
   imagePublicIds?: string[]
   specs?: Record<string, string>

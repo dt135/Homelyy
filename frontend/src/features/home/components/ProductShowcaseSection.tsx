@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { Product } from '../../../types/product'
+import { isLikelyImageUrl } from '../../../utils/images'
 import SectionHeading from './SectionHeading'
 
 const currencyFormatter = new Intl.NumberFormat('vi-VN', {
@@ -51,6 +52,19 @@ function ProductShowcaseSection({
               className="home-product-card reveal-up"
               style={{ animationDelay: `${index * 80}ms` }}
             >
+              <div className="home-product-media">
+                {isLikelyImageUrl(product.thumbnail) ? (
+                  <img
+                    src={product.thumbnail}
+                    alt={product.name}
+                    className="home-product-media-image"
+                    loading="lazy"
+                  />
+                ) : (
+                  <span className="home-product-media-fallback">{product.thumbnail}</span>
+                )}
+              </div>
+
               <p className="product-tag">{getProductTag(product, mode, index)}</p>
               <h3>{product.name}</h3>
               <p className="product-category">{product.category}</p>

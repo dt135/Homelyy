@@ -149,6 +149,190 @@ function parseBooleanInput(value) {
   return Boolean(value)
 }
 
+function parseNonNegativeInteger(value) {
+  if (value == null || value === '') {
+    return null
+  }
+
+  const parsed = Number(value)
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    return null
+  }
+
+  return parsed
+}
+
+function normalizeMediaInput(input, fallbackAlt) {
+  let raw = input
+
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim()
+    if (!trimmed) {
+      return []
+    }
+
+    try {
+      raw = JSON.parse(trimmed)
+    } catch (_error) {
+      return []
+    }
+  }
+
+  if (!Array.isArray(raw)) {
+    return []
+  }
+
+  return raw
+    .map((item, index) => {
+      if (!item || typeof item !== 'object') {
+        return null
+      }
+
+      const url = String(item.url || '').trim()
+      if (!url) {
+        return null
+      }
+
+      const publicId = String(item.publicId || '').trim()
+      const alt = String(item.alt || fallbackAlt || '').trim()
+      const positionValue = Number(item.position)
+
+      return {
+        url,
+        publicId,
+        alt,
+        position: Number.isFinite(positionValue) && positionValue >= 0 ? positionValue : index,
+        isPrimary: parseBooleanInput(item.isPrimary),
+      }
+    })
+    .filter(Boolean)
+}
+
+function buildMediaFromLegacyFields({ name, thumbnail, thumbnailPublicId, images, imagePublicIds }) {
+  const fallbackAlt = String(name || '').trim()
+  const normalizedThumbnail = String(thumbnail || '').trim()
+  const galleryUrls = normalizeStringArray(images)
+  const galleryPublicIds = normalizeStringArray(imagePublicIds)
+
+  const media = []
+
+  if (normalizedThumbnail) {
+    media.push({
+      url: normalizedThumbnail,
+      publicId: String(thumbnailPublicId || '').trim(),
+      alt: fallbackAlt,
+      position: 0,
+      isPrimary: true,
+    })
+  }
+
+  galleryUrls.forEach((url, index) => {
+    media.push({
+      url,
+      publicId: galleryPublicIds[index] || '',
+      alt: fallbackAlt,
+      position: media.length,
+      isPrimary: false,
+    })
+  })
+
+  return media
+}
+
+function finalizeProductMedia(items, fallbackThumbnail, fallbackName) {
+  const deduped = []
+  const byUrl = new Map()
+
+  items.forEach((item) => {
+    const url = String(item?.url || '').trim()
+    if (!url) {
+      return
+    }
+
+    const current = byUrl.get(url)
+    if (current) {
+      if (!current.publicId && item.publicId) {
+        current.publicId = String(item.publicId).trim()
+      }
+      if (!current.alt && item.alt) {
+        current.alt = String(item.alt).trim()
+      }
+      if (item.isPrimary) {
+        current.isPrimary = true
+      }
+      return
+    }
+
+    const positionValue = Number(item.position)
+    const created = {
+      url,
+      publicId: String(item.publicId || '').trim(),
+      alt: String(item.alt || fallbackName || '').trim(),
+      position: Number.isFinite(positionValue) && positionValue >= 0 ? positionValue : deduped.length,
+      isPrimary: Boolean(item.isPrimary),
+    }
+
+    byUrl.set(url, created)
+    deduped.push(created)
+  })
+
+  deduped.sort((a, b) => a.position - b.position)
+
+  let primaryIndex = deduped.findIndex((item) => item.isPrimary)
+  if (primaryIndex < 0 && deduped.length > 0) {
+    primaryIndex = 0
+  }
+
+  const media = deduped.map((item, index) => ({
+    ...item,
+    position: index,
+    isPrimary: index === primaryIndex,
+  }))
+
+  const primaryMedia = primaryIndex >= 0 ? media[primaryIndex] : null
+  const galleryMedia = media.filter((_, index) => index !== primaryIndex)
+
+  return {
+    media,
+    thumbnail: String(primaryMedia?.url || fallbackThumbnail || fallbackName || '').trim(),
+    thumbnailPublicId: String(primaryMedia?.publicId || '').trim(),
+    images: galleryMedia.map((item) => item.url),
+    imagePublicIds: galleryMedia.map((item) => item.publicId).filter(Boolean),
+  }
+}
+
+function composeProductMedia({
+  name,
+  inputMedia,
+  existingMedia,
+  thumbnail,
+  thumbnailPublicId,
+  images,
+  imagePublicIds,
+}) {
+  const fallbackName = String(name || '').trim()
+  const fromInput = normalizeMediaInput(inputMedia, fallbackName)
+
+  if (fromInput.length > 0) {
+    return finalizeProductMedia(fromInput, thumbnail, fallbackName)
+  }
+
+  const legacyMedia = buildMediaFromLegacyFields({
+    name: fallbackName,
+    thumbnail,
+    thumbnailPublicId,
+    images,
+    imagePublicIds,
+  })
+
+  if (legacyMedia.length > 0) {
+    return finalizeProductMedia(legacyMedia, thumbnail, fallbackName)
+  }
+
+  const fromExisting = normalizeMediaInput(existingMedia, fallbackName)
+  return finalizeProductMedia(fromExisting, thumbnail, fallbackName)
+}
+
 function normalizeCustomId(value, prefix) {
   const raw = String(value || '').trim()
 
@@ -470,12 +654,28 @@ async function createProductForAdmin(payload, uploadedAssets = {}) {
   const bodyImagePublicIds = normalizeStringArray(input.imagePublicIds)
   const uploadedImageUrls = uploadedImageAssets.map((item) => item.url)
   const uploadedImagePublicIds = uploadedImageAssets.map((item) => item.publicId)
+  const thumbnailImageIndex = parseNonNegativeInteger(input.thumbnailImageIndex)
+  const selectedUploadedThumbnail =
+    thumbnailImageIndex != null ? uploadedImageAssets[thumbnailImageIndex] || null : null
 
   const images = [...bodyImages, ...uploadedImageUrls].filter(Boolean)
   const imagePublicIds = [...bodyImagePublicIds, ...uploadedImagePublicIds].filter(Boolean)
 
-  const thumbnail = String(uploadedThumbnail?.url || input.thumbnail || images[0] || name.toUpperCase()).trim()
-  const thumbnailPublicId = String(uploadedThumbnail?.publicId || input.thumbnailPublicId || '').trim()
+  const thumbnail = String(
+    uploadedThumbnail?.url || selectedUploadedThumbnail?.url || input.thumbnail || images[0] || name.toUpperCase(),
+  ).trim()
+  const thumbnailPublicId = String(
+    uploadedThumbnail?.publicId || selectedUploadedThumbnail?.publicId || input.thumbnailPublicId || '',
+  ).trim()
+  const composedMedia = composeProductMedia({
+    name,
+    inputMedia: input.media,
+    existingMedia: [],
+    thumbnail,
+    thumbnailPublicId,
+    images,
+    imagePublicIds,
+  })
 
   const product = await Product.create({
     id,
@@ -489,10 +689,11 @@ async function createProductForAdmin(payload, uploadedAssets = {}) {
     rating: toPositiveNumber(input.rating),
     stock: toPositiveNumber(input.stock),
     sold: toPositiveNumber(input.sold),
-    thumbnail,
-    thumbnailPublicId,
-    images,
-    imagePublicIds,
+    thumbnail: composedMedia.thumbnail,
+    thumbnailPublicId: composedMedia.thumbnailPublicId,
+    media: composedMedia.media,
+    images: composedMedia.images,
+    imagePublicIds: composedMedia.imagePublicIds,
     specs: normalizeSpecs(input.specs),
     isFeatured: parseBooleanInput(input.isFeatured),
     isNew: parseBooleanInput(input.isNew),
@@ -513,6 +714,10 @@ async function updateProductForAdmin(productId, payload, uploadedAssets = {}) {
 
   const previousThumbnailPublicId = product.thumbnailPublicId
   const previousImagePublicIds = normalizeStringArray(product.imagePublicIds)
+  const previousAllPublicIds = [previousThumbnailPublicId, ...previousImagePublicIds].filter(Boolean)
+  const thumbnailImageIndex = parseNonNegativeInteger(input.thumbnailImageIndex)
+  const selectedUploadedThumbnail =
+    thumbnailImageIndex != null ? uploadedImageAssets[thumbnailImageIndex] || null : null
 
   if (input.name != null) {
     product.name = String(input.name).trim()
@@ -543,14 +748,18 @@ async function updateProductForAdmin(productId, payload, uploadedAssets = {}) {
   }
   if (uploadedThumbnail) {
     product.thumbnail = String(uploadedThumbnail.url || '').trim()
-  } else if (input.thumbnail != null) {
-    product.thumbnail = String(input.thumbnail).trim()
-  }
-
-  if (uploadedThumbnail) {
     product.thumbnailPublicId = String(uploadedThumbnail.publicId || '').trim()
-  } else if (input.thumbnailPublicId != null) {
-    product.thumbnailPublicId = String(input.thumbnailPublicId).trim()
+  } else if (selectedUploadedThumbnail) {
+    product.thumbnail = String(selectedUploadedThumbnail.url || '').trim()
+    product.thumbnailPublicId = String(selectedUploadedThumbnail.publicId || '').trim()
+  } else {
+    if (input.thumbnail != null) {
+      product.thumbnail = String(input.thumbnail).trim()
+    }
+
+    if (input.thumbnailPublicId != null) {
+      product.thumbnailPublicId = String(input.thumbnailPublicId).trim()
+    }
   }
 
   const hasImagesInput = input.images != null
@@ -584,19 +793,33 @@ async function updateProductForAdmin(productId, payload, uploadedAssets = {}) {
     product.slug = await ensureUniqueProductSlug(preferredSlug, productId)
   }
 
+  const composedMedia = composeProductMedia({
+    name: product.name,
+    inputMedia: input.media,
+    existingMedia: product.media,
+    thumbnail: product.thumbnail,
+    thumbnailPublicId: product.thumbnailPublicId,
+    images: product.images,
+    imagePublicIds: product.imagePublicIds,
+  })
+
+  product.media = composedMedia.media
+  product.thumbnail = composedMedia.thumbnail
+  product.thumbnailPublicId = composedMedia.thumbnailPublicId
+  product.images = composedMedia.images
+  product.imagePublicIds = composedMedia.imagePublicIds
+
   await product.save()
 
-  if (previousThumbnailPublicId && previousThumbnailPublicId !== product.thumbnailPublicId) {
-    await destroyImagesByPublicIds(previousThumbnailPublicId)
-  }
-
+  const nextThumbnailPublicId = String(product.thumbnailPublicId || '').trim()
   const nextImagePublicIds = normalizeStringArray(product.imagePublicIds)
-  const removedImagePublicIds = previousImagePublicIds.filter(
-    (publicId) => !nextImagePublicIds.includes(publicId),
+  const nextAllPublicIds = [nextThumbnailPublicId, ...nextImagePublicIds].filter(Boolean)
+  const removedPublicIds = previousAllPublicIds.filter(
+    (publicId) => !nextAllPublicIds.includes(publicId),
   )
 
-  if (removedImagePublicIds.length > 0) {
-    await destroyImagesByPublicIds(removedImagePublicIds)
+  if (removedPublicIds.length > 0) {
+    await destroyImagesByPublicIds(removedPublicIds)
   }
 
   return sanitizeDoc(product)
@@ -611,9 +834,12 @@ async function deleteProductForAdmin(productId) {
   const publicIds = [
     deleted.thumbnailPublicId,
     ...normalizeStringArray(deleted.imagePublicIds),
+    ...normalizeMediaInput(deleted.media, deleted.name).map((item) => item.publicId),
   ].filter(Boolean)
-  if (publicIds.length > 0) {
-    await destroyImagesByPublicIds(publicIds)
+
+  const uniquePublicIds = [...new Set(publicIds)]
+  if (uniquePublicIds.length > 0) {
+    await destroyImagesByPublicIds(uniquePublicIds)
   }
 
   return sanitizeDoc(deleted)

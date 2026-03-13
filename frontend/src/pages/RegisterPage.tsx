@@ -50,7 +50,7 @@ function RegisterPage() {
         email: normalizeEmail(email),
         password,
       })
-      navigate('/profile')
+      navigate('/')
     } catch (error) {
       setErrorMessage(getErrorMessage(error))
     } finally {

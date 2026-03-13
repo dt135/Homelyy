@@ -128,10 +128,6 @@ function ProductListPage() {
       <div className="page-head reveal-up">
         <p className="eyebrow">Danh mục sản phẩm</p>
         <h1 className="page-title">Danh sách sản phẩm</h1>
-        <p className="page-copy">
-          Tìm kiếm, lọc và sắp xếp sản phẩm theo nhu cầu. Trang này đã sẵn sàng
-          để thay mock API bằng backend thật ở phase tiếp theo.
-        </p>
       </div>
 
       <div className="catalog-toolbar">
