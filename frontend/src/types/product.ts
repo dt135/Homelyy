@@ -24,6 +24,7 @@ export type Product = {
   images: string[]
   imagePublicIds?: string[]
   specs: Record<string, string>
+  technicalDetails?: string
   isFeatured?: boolean
   isNew?: boolean
 }

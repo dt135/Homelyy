@@ -50,6 +50,21 @@ async function ensureUniqueProductSlug(baseSlug, currentProductId) {
   }
 }
 
+async function generateUniqueProductId() {
+  let candidate = `prd-${Date.now()}`
+  let index = 1
+
+  while (true) {
+    const existing = await Product.findOne({ id: candidate }).select('id')
+    if (!existing) {
+      return candidate
+    }
+
+    candidate = `prd-${Date.now()}-${index}`
+    index += 1
+  }
+}
+
 function toPositiveNumber(value, fallback = 0) {
   const parsed = Number(value)
   if (!Number.isFinite(parsed) || parsed < 0) {
@@ -642,11 +657,7 @@ async function createProductForAdmin(payload, uploadedAssets = {}) {
     throw new Error('Thiếu thông tin bắt buộc: tên, danh mục, thương hiệu, mô tả')
   }
 
-  const id = String(input.id || `prd-${Date.now()}`)
-  const existingById = await Product.findOne({ id }).select('id')
-  if (existingById) {
-    throw new Error('ID sản phẩm đã tồn tại')
-  }
+  const id = await generateUniqueProductId()
 
   const preferredSlug = toSlug(input.slug || name)
   const slug = await ensureUniqueProductSlug(preferredSlug)
@@ -696,6 +707,7 @@ async function createProductForAdmin(payload, uploadedAssets = {}) {
     images: composedMedia.images,
     imagePublicIds: composedMedia.imagePublicIds,
     specs: normalizeSpecs(input.specs),
+    technicalDetails: String(input.technicalDetails || '').trim(),
     isFeatured: parseBooleanInput(input.isFeatured),
     isNew: parseBooleanInput(input.isNew),
   })
@@ -781,6 +793,9 @@ async function updateProductForAdmin(productId, payload, uploadedAssets = {}) {
 
   if (input.specs != null) {
     product.specs = normalizeSpecs(input.specs)
+  }
+  if (input.technicalDetails != null) {
+    product.technicalDetails = String(input.technicalDetails).trim()
   }
   if (input.isFeatured != null) {
     product.isFeatured = parseBooleanInput(input.isFeatured)

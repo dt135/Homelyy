@@ -36,6 +36,7 @@ const productSchema = new mongoose.Schema(
       of: String,
       default: {},
     },
+    technicalDetails: { type: String, default: '', trim: true },
     isFeatured: { type: Boolean, default: false, index: true },
     isNew: { type: Boolean, default: false, index: true },
   },

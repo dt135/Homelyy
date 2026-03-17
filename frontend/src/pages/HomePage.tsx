@@ -1,11 +1,10 @@
 ﻿import { useEffect, useState } from 'react'
-import BrandsSection from '../features/home/components/BrandsSection'
 import CtaSection from '../features/home/components/CtaSection'
 import HeroBanner from '../features/home/components/HeroBanner'
 import ProductShowcaseSection from '../features/home/components/ProductShowcaseSection'
 import TrustHighlightsSection from '../features/home/components/TrustHighlightsSection'
+import { trustHighlights } from '../features/home/data/homeData'
 import { getErrorMessage } from '../services/apiClient'
-import { brands, trustHighlights } from '../features/home/data/homeData'
 import { fetchFeaturedProducts, fetchNewProducts } from '../services/productService'
 import type { Product } from '../types/product'
 import '../features/home/home.css'
@@ -57,7 +56,6 @@ function HomePage() {
         products={newProducts}
         mode="new"
       />
-      <BrandsSection items={brands} />
       <CtaSection />
     </section>
   )

@@ -55,6 +55,14 @@ function ProductDetailPage() {
 
   const displayedMedia = galleryMedia[activeMediaIndex] || galleryMedia[defaultMediaIndex]
   const displayedImage = displayedMedia?.url || product?.thumbnail || ''
+  const specEntries = useMemo(
+    () => Object.entries(product?.specs ?? {}).filter(([key]) => key !== 'Äang cáº­p nháº­t'),
+    [product],
+  )
+  const technicalDetails = useMemo(
+    () => String(product?.technicalDetails || '').trim(),
+    [product],
+  )
 
   useEffect(() => {
     if (!productId) {
@@ -118,6 +126,8 @@ function ProductDetailPage() {
                         type="button"
                         className={`product-gallery-item ${isActive ? 'is-active' : ''}`}
                         onClick={() => setActiveMediaIndex(index)}
+                        onMouseEnter={() => setActiveMediaIndex(index)}
+                        onFocus={() => setActiveMediaIndex(index)}
                         aria-label={`Xem ảnh ${index + 1}`}
                       >
                         {isLikelyImageUrl(item.url) ? (
@@ -138,7 +148,6 @@ function ProductDetailPage() {
             <div className="product-detail-content">
               <h2>{product.name}</h2>
               <p className="catalog-muted">{product.category}</p>
-              <p>{product.description}</p>
 
               <div className="product-price-group">
                 <strong>{vndFormatter.format(product.price)}</strong>
@@ -163,24 +172,22 @@ function ProductDetailPage() {
                   Quay lại danh sách
                 </Link>
               </div>
+
+              <p className="catalog-muted">
+                <strong>Mô tả:</strong>{' '}
+                {product.description?.trim()
+                  ? product.description
+                  : 'Đang cập nhật mô tả chi tiết cho sản phẩm này.'}
+              </p>
+
+              <p className="catalog-muted">
+                <strong>Thông số kỹ thuật:</strong>{' '}
+                {specEntries.length > 0
+                  ? specEntries.map(([key, value]) => `${key}: ${value}`).join(' • ')
+                  : technicalDetails || 'Đang cập nhật thông số kỹ thuật.'}
+              </p>
             </div>
           </div>
-
-          <article className="placeholder-card">
-            <h3>Thông số kỹ thuật</h3>
-            <div className="spec-grid">
-              {Object.entries(product.specs ?? {}).length === 0 ? (
-                <p className="catalog-muted">Đang cập nhật thông số kỹ thuật.</p>
-              ) : (
-                Object.entries(product.specs).map(([key, value]) => (
-                  <div key={key} className="spec-row">
-                    <span>{key}</span>
-                    <strong>{value}</strong>
-                  </div>
-                ))
-              )}
-            </div>
-          </article>
 
           <article className="placeholder-card">
             <h3>Sản phẩm liên quan</h3>

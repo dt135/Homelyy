@@ -23,6 +23,7 @@ function ProductListPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [brands, setBrands] = useState<string[]>([])
+  const [brandsByCategory, setBrandsByCategory] = useState<Record<string, string[]>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -78,12 +79,25 @@ function ProductListPage() {
       .then((payload) => {
         setCategories(payload.categories)
         setBrands(payload.brands)
+        setBrandsByCategory(payload.brandsByCategory)
       })
       .catch(() => {
         setCategories([])
         setBrands([])
+        setBrandsByCategory({})
       })
   }, [])
+
+  const availableBrands = useMemo(
+    () => (category ? brandsByCategory[category] ?? [] : brands),
+    [brands, brandsByCategory, category],
+  )
+
+  useEffect(() => {
+    if (brand && !availableBrands.includes(brand)) {
+      setBrand('')
+    }
+  }, [availableBrands, brand])
 
   const query = useMemo(
     () => ({
@@ -128,17 +142,16 @@ function ProductListPage() {
       <div className="page-head reveal-up">
         <p className="eyebrow">Danh mục sản phẩm</p>
         <h1 className="page-title">Danh sách sản phẩm</h1>
-      </div>
-
-      <div className="catalog-toolbar">
-        <SearchBar value={searchTerm} onChange={setSearchTerm} />
-        <SortDropdown value={sort} onChange={setSort} />
+        <div className="catalog-toolbar catalog-toolbar-embedded">
+          <SearchBar value={searchTerm} onChange={setSearchTerm} />
+          <SortDropdown value={sort} onChange={setSort} />
+        </div>
       </div>
 
       <div className="catalog-content">
         <FilterSidebar
           categories={categories}
-          brands={brands}
+          brands={availableBrands}
           selectedCategory={category}
           selectedBrand={brand}
           minPrice={minPrice}

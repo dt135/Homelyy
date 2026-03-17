@@ -1,4 +1,4 @@
-import { API_ENDPOINTS } from '../constants/endpoints'
+﻿import { API_ENDPOINTS } from '../constants/endpoints'
 import { request } from './httpClient'
 import type { Product, ProductMedia, ProductQuery } from '../types/product'
 
@@ -113,7 +113,7 @@ function buildLegacyMedia(product: Partial<Product>, fallbackAlt: string): Produ
 }
 
 function resolveProductMedia(product: Partial<Product>): ProductMedia[] {
-  const fallbackAlt = String(product.name || 'Sản phẩm').trim()
+  const fallbackAlt = String(product.name || 'Sáº£n pháº©m').trim()
   const fromMedia = normalizeMedia(product.media, fallbackAlt)
   if (fromMedia.length > 0) {
     return fromMedia
@@ -129,16 +129,16 @@ function normalizeProduct(product: Partial<Product>): Product {
   return {
     id: product.id ?? '',
     slug: product.slug ?? product.id ?? '',
-    name: product.name ?? 'Sản phẩm',
-    description: product.description ?? 'Đang cập nhật mô tả sản phẩm.',
-    category: product.category ?? 'Khác',
+    name: product.name ?? 'Sáº£n pháº©m',
+    description: product.description ?? 'Äang cáº­p nháº­t mÃ´ táº£ sáº£n pháº©m.',
+    category: product.category ?? 'KhÃ¡c',
     brand: product.brand ?? 'Homelyy',
     price: Number(product.price ?? 0),
     oldPrice: product.oldPrice,
     rating: Number(product.rating ?? 0),
     stock: Number(product.stock ?? 0),
     sold: Number(product.sold ?? 0),
-    thumbnail: primaryMedia?.url || product.thumbnail || (product.name || 'Sản phẩm').toUpperCase(),
+    thumbnail: primaryMedia?.url || product.thumbnail || (product.name || 'Sáº£n pháº©m').toUpperCase(),
     thumbnailPublicId: primaryMedia?.publicId || product.thumbnailPublicId,
     media,
     images: galleryMedia.map((item) => item.url),
@@ -147,8 +147,9 @@ function normalizeProduct(product: Partial<Product>): Product {
       product.specs && typeof product.specs === 'object'
         ? product.specs
         : {
-            'Đang cập nhật': 'Thông tin kỹ thuật sẽ hiển thị sớm.',
+            'Äang cáº­p nháº­t': 'ThÃ´ng tin ká»¹ thuáº­t sáº½ hiá»ƒn thá»‹ sá»›m.',
           },
+    technicalDetails: String((product as Partial<Product>).technicalDetails || '').trim(),
     isFeatured: Boolean(product.isFeatured),
     isNew: Boolean(product.isNew),
   }
@@ -200,19 +201,41 @@ export async function fetchRelatedProducts(productId: string): Promise<Product[]
 export async function fetchCatalogFilters(): Promise<{
   categories: string[]
   brands: string[]
+  brandsByCategory: Record<string, string[]>
 }> {
   const [categoryPayload, productsPayload] = await Promise.all([
     request<Array<{ id: string; name: string }>>(API_ENDPOINTS.categories.list),
-    request<Array<{ brand: string }>>(`${API_ENDPOINTS.products.list}?limit=200`),
+    request<Array<{ brand: string; category: string }>>(`${API_ENDPOINTS.products.list}?limit=200`),
   ])
 
   const brandSet = new Set(
     productsPayload.map((item) => item.brand).filter((brand): brand is string => Boolean(brand)),
   )
+  const brandsByCategory = productsPayload.reduce<Record<string, Set<string>>>((result, item) => {
+    const category = String(item.category || '').trim()
+    const brand = String(item.brand || '').trim()
+
+    if (!category || !brand) {
+      return result
+    }
+
+    if (!result[category]) {
+      result[category] = new Set()
+    }
+
+    result[category].add(brand)
+    return result
+  }, {})
 
   return {
     categories: categoryPayload.map((item) => item.name),
     brands: [...brandSet].sort((a, b) => a.localeCompare(b, 'vi')),
+    brandsByCategory: Object.fromEntries(
+      Object.entries(brandsByCategory).map(([category, categoryBrands]) => [
+        category,
+        [...categoryBrands].sort((a, b) => a.localeCompare(b, 'vi')),
+      ]),
+    ),
   }
 }
 
@@ -229,3 +252,4 @@ export async function fetchNewProducts(): Promise<Product[]> {
   )
   return normalizeProducts(payload)
 }
+
