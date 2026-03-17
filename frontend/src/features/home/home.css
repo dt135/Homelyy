@@ -639,3 +639,156 @@
   }
 }
 
+@media (max-width: 760px) {
+  .home-page {
+    gap: 1.25rem;
+  }
+
+  .nebula-home-hero {
+    min-height: auto;
+    gap: 1.2rem;
+    padding: 1rem;
+    border-radius: 26px;
+  }
+
+  .home-hero-content h1 {
+    margin-top: 0;
+    font-size: clamp(1.9rem, 9vw, 2.45rem);
+    line-height: 1.08;
+  }
+
+  .hero-badge-list {
+    margin-top: 0.85rem;
+    gap: 0.4rem;
+  }
+
+  .hero-badge-list li {
+    font-size: 0.72rem;
+    padding: 0.26rem 0.58rem;
+  }
+
+  .nebula-hero-actions,
+  .home-cta .button-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .nebula-hero-actions .primary-btn,
+  .nebula-hero-actions .ghost-btn,
+  .home-cta .button-row > * {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nebula-hero-stats {
+    gap: 0.7rem;
+    margin-top: 1rem;
+  }
+
+  .nebula-stat-card {
+    padding: 0.9rem;
+    border-radius: 16px;
+  }
+
+  .nebula-stat-card strong {
+    font-size: 1.3rem;
+  }
+
+  .nebula-hero-visual {
+    min-height: auto;
+    width: 100%;
+  }
+
+  .nebula-device-frame {
+    width: min(100%, 320px);
+    padding: 0.85rem;
+    border-radius: 28px;
+  }
+
+  .nebula-device-top {
+    min-height: 140px;
+    padding: 1.1rem;
+    border-radius: 20px;
+  }
+
+  .nebula-device-top h3 {
+    font-size: 1.7rem;
+  }
+
+  .nebula-device-grid {
+    gap: 0.65rem;
+  }
+
+  .nebula-device-panel {
+    min-height: 78px;
+    border-radius: 16px;
+  }
+
+  .nebula-device-panel.is-tall {
+    min-height: 98px;
+  }
+
+  .nebula-floating-card {
+    width: min(100%, 320px);
+  }
+
+  .home-trust-strip,
+  .home-category-grid,
+  .home-product-grid,
+  .home-brand-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-trust-strip {
+    padding: 0.75rem;
+    gap: 0.7rem;
+  }
+
+  .home-trust-item,
+  .home-category-card,
+  .home-product-card,
+  .home-brand-card,
+  .home-cta {
+    padding: 0.9rem;
+    border-radius: 20px;
+  }
+
+  .home-product-media {
+    aspect-ratio: 16 / 11;
+  }
+
+  .home-product-card h3,
+  .home-category-card h3 {
+    font-size: 0.98rem;
+  }
+
+  .product-meta {
+    gap: 0.35rem 0.55rem;
+    font-size: 0.84rem;
+  }
+
+  .home-cta {
+    gap: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .nebula-home-hero {
+    padding: 0.9rem;
+    border-radius: 22px;
+  }
+
+  .home-hero-content h1 {
+    font-size: clamp(1.7rem, 10vw, 2.1rem);
+  }
+
+  .nebula-device-frame {
+    width: 100%;
+  }
+
+  .nebula-floating-card {
+    width: 100%;
+    padding: 0.8rem 0.9rem;
+  }
+}
+

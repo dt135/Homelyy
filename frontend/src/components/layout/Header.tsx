@@ -1,4 +1,6 @@
 ﻿import { NavLink, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useCart } from '../../hooks/useCart'
 import { useTheme } from '../../hooks/useTheme'
@@ -12,8 +14,14 @@ function Header() {
   const { user, isAuthenticated, logout } = useAuth()
   const { totalItems } = useCart()
   const { theme, toggleTheme } = useTheme()
+  const location = useLocation()
   const navigate = useNavigate()
   const isDark = theme === 'dark'
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [location.pathname])
 
   function handleLogout() {
     logout()
@@ -21,7 +29,7 @@ function Header() {
   }
 
   return (
-    <header className="site-header nebula-header-shell">
+    <header className={`site-header nebula-header-shell${isMobileMenuOpen ? ' is-mobile-menu-open' : ''}`}>
       <div className="container header-row nebula-header-row">
         <NavLink to="/" className="brand nebula-brand">
           <span className="nebula-brand-mark" aria-hidden="true">
@@ -32,7 +40,11 @@ function Header() {
           </span>
         </NavLink>
 
-        <nav aria-label="Điều hướng chính" className="nebula-nav-wrap">
+        <nav
+          id="site-mobile-navigation"
+          aria-label="Điều hướng chính"
+          className={`nebula-nav-wrap${isMobileMenuOpen ? ' is-open' : ''}`}
+        >
           <ul className="nav-list nebula-nav-list">
             {navItems.map((item) => (
               <li key={item.to}>
@@ -138,6 +150,27 @@ function Header() {
               Đăng nhập
             </NavLink>
           )}
+
+          <button
+            type="button"
+            className="ghost-btn mobile-menu-toggle"
+            aria-label={isMobileMenuOpen ? 'Đóng menu điều hướng' : 'Mở menu điều hướng'}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="site-mobile-navigation"
+            onClick={() => setIsMobileMenuOpen((current) => !current)}
+          >
+            <span className="mobile-menu-toggle-icon" aria-hidden="true">
+              {isMobileMenuOpen ? (
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <path d="M6 6l12 12M18 6 6 18" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <path d="M4 7h16M4 12h16M4 17h16" />
+                </svg>
+              )}
+            </span>
+          </button>
         </div>
       </div>
     </header>
