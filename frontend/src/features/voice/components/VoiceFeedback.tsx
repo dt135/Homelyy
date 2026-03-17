@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { supportedVoiceCommands } from '../commandConfig'
 
 type VoiceFeedbackProps = {

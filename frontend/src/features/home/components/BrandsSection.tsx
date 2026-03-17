@@ -1,4 +1,4 @@
-import type { BrandSpotlight } from '../types'
+﻿import type { BrandSpotlight } from '../types'
 import SectionHeading from './SectionHeading'
 
 type BrandsSectionProps = {
@@ -9,7 +9,7 @@ function BrandsSection({ items }: BrandsSectionProps) {
   return (
     <section className="home-section">
       <SectionHeading
-        eyebrow="Thương hiệu tin dùng"
+        eyebrow="Đối tác chọn lọc"
         title="Thương hiệu đồng hành"
         description="Các đối tác thương hiệu được lựa chọn dựa trên độ bền, mức độ ổn định và hậu mãi."
       />

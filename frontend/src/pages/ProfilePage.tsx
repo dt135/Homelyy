@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { getErrorMessage } from '../services/apiClient'
 import { normalizePhone, normalizeWhitespace, validateFullName, validatePhone } from '../utils/validators'
 
 function ProfilePage() {
@@ -10,6 +11,7 @@ function ProfilePage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('')
   const [statusMessage, setStatusMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const avatarPreview = avatarPreviewUrl || user?.avatarUrl || ''
 
@@ -49,6 +51,7 @@ function ProfilePage() {
     }
 
     try {
+      setIsSubmitting(true)
       await updateProfile({
         fullName: normalizeWhitespace(fullName),
         phone: normalizePhone(phone),
@@ -56,8 +59,10 @@ function ProfilePage() {
       })
       setStatusMessage('Cập nhật hồ sơ thành công')
       setAvatarFile(null)
-    } catch {
-      setStatusMessage('Có lỗi khi cập nhật hồ sơ')
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -96,8 +101,8 @@ function ProfilePage() {
             <span>Số điện thoại</span>
             <input value={phone} onChange={(event) => setPhone(event.target.value)} />
           </label>
-          <button type="submit" className="ghost-btn">
-            Cập nhật hồ sơ
+          <button type="submit" className="ghost-btn" disabled={isSubmitting}>
+            {isSubmitting ? 'Đang cập nhật...' : 'Cập nhật hồ sơ'}
           </button>
           {statusMessage ? <p className="catalog-muted">{statusMessage}</p> : null}
         </form>

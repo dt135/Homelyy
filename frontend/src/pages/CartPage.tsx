@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+﻿import { Link } from 'react-router-dom'
 import { useCart } from '../hooks/useCart'
 import { isLikelyImageUrl } from '../utils/images'
 import { vndFormatter } from '../utils/formatters'
@@ -31,8 +31,10 @@ function CartPage() {
                   ) : (
                     <p className="tag">{item.thumbnail}</p>
                   )}
-                  <h2>{item.name}</h2>
-                  <p className="catalog-muted">{vndFormatter.format(item.price)}</p>
+                  <div>
+                    <h2>{item.name}</h2>
+                    <p className="catalog-muted">{vndFormatter.format(item.price)}</p>
+                  </div>
                 </div>
 
                 <div className="cart-item-actions">

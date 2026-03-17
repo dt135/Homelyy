@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import FilterSidebar from '../features/products/components/FilterSidebar'
 import ProductGrid from '../features/products/components/ProductGrid'

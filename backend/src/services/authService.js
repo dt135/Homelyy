@@ -1,5 +1,6 @@
 const User = require('../models/UserModel')
 const { sanitizeDoc } = require('../utils/mongoSanitize')
+const { hashPassword, isPasswordHash, verifyPassword } = require('../utils/password')
 const {
   normalizeEmail,
   normalizePhone,
@@ -25,15 +26,20 @@ async function login(payload) {
   const password = String(input.password || '')
 
   if (!password) {
-    throw new Error('Vui lòng nhập mật khẩu')
+    throw new Error('Vui long nhap mat khau')
   }
 
   const foundUser = await User.findOne({ email })
 
-  if (!foundUser || foundUser.password !== password) {
-    const error = new Error('Email hoặc mật khẩu chưa đúng')
+  if (!foundUser || !verifyPassword(password, foundUser.password)) {
+    const error = new Error('Email hoac mat khau chua dung')
     error.statusCode = 401
     throw error
+  }
+
+  if (!isPasswordHash(foundUser.password)) {
+    foundUser.password = hashPassword(password)
+    await foundUser.save()
   }
 
   return sanitizeUser(sanitizeDoc(foundUser))
@@ -48,7 +54,7 @@ async function register(payload) {
 
   const existingUser = await User.findOne({ email }).select('id')
   if (existingUser) {
-    const error = new Error('Email đã tồn tại')
+    const error = new Error('Email da ton tai')
     error.statusCode = 409
     throw error
   }
@@ -57,7 +63,7 @@ async function register(payload) {
     id: `user-${Date.now()}`,
     fullName,
     email,
-    password,
+    password: hashPassword(password),
     role: 'user',
     phone,
     avatarUrl: '',

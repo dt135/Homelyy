@@ -1,4 +1,4 @@
-import type { TrustHighlight } from '../types'
+﻿import type { TrustHighlight } from '../types'
 
 type TrustHighlightsSectionProps = {
   items: TrustHighlight[]

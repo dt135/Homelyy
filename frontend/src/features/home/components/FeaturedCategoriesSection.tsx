@@ -1,4 +1,4 @@
-import type { CategorySpotlight } from '../types'
+﻿import type { CategorySpotlight } from '../types'
 import SectionHeading from './SectionHeading'
 
 type FeaturedCategoriesSectionProps = {
@@ -9,8 +9,8 @@ function FeaturedCategoriesSection({ items }: FeaturedCategoriesSectionProps) {
   return (
     <section className="home-section">
       <SectionHeading
-        eyebrow="Danh mục nổi bật"
-        title="Danh mục nổi bật"
+        eyebrow="Khám phá nhanh"
+        title="Danh mục quan tâm nhiều"
         description="Các nhóm sản phẩm được người dùng quan tâm nhiều, phù hợp để bắt đầu tra cứu nhanh."
       />
 

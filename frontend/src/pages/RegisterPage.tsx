@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
@@ -92,7 +92,7 @@ function RegisterPage() {
           />
         </label>
         {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
-        <button type="submit" className="primary-btn">
+        <button type="submit" className="primary-btn" disabled={isSubmitting}>
           {isSubmitting ? 'Đang tạo...' : 'Tạo tài khoản'}
         </button>
         <p>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { fetchOrdersByUser } from '../services/orderService'
 import type { Order } from '../types/order'
@@ -15,7 +15,7 @@ function OrderHistoryPage() {
     }
 
     setIsLoading(true)
-    fetchOrdersByUser(user.id)
+    fetchOrdersByUser()
       .then((payload) => setOrders(payload))
       .finally(() => setIsLoading(false))
   }, [user])

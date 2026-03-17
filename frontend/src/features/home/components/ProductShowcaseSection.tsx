@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+﻿import { Link } from 'react-router-dom'
 import type { Product } from '../../../types/product'
 import { isLikelyImageUrl } from '../../../utils/images'
 import SectionHeading from './SectionHeading'
@@ -23,10 +23,10 @@ function getProductTag(product: Product, mode: 'featured' | 'new', index: number
   }
 
   if (product.rating >= 4.8) {
-    return 'Top Rated'
+    return 'Đánh giá cao'
   }
   if (product.sold >= 200) {
-    return 'Best Seller'
+    return 'Bán chạy'
   }
   return 'Nổi bật'
 }

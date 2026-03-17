@@ -2,18 +2,38 @@ const Order = require('../models/OrderModel')
 const Product = require('../models/ProductModel')
 const { sanitizeDoc, sanitizeDocs } = require('../utils/mongoSanitize')
 
-async function listOrders(userId) {
-  const filters = {}
-  if (userId) {
-    filters.userId = userId
+function createAuthorizationError(message) {
+  const error = new Error(message)
+  error.statusCode = 403
+  return error
+}
+
+async function listOrders(authUser, requestedUserId) {
+  if (!authUser?.id) {
+    throw createAuthorizationError('Ban can dang nhap de xem don hang')
   }
+
+  const filters = {}
+
+  if (authUser.role === 'admin') {
+    if (requestedUserId) {
+      filters.userId = requestedUserId
+    }
+  } else {
+    filters.userId = authUser.id
+  }
+
   const orders = await Order.find(filters).sort({ createdAt: -1 })
   return sanitizeDocs(orders)
 }
 
-async function createOrder(payload) {
+async function createOrder(authUser, payload) {
+  if (!authUser?.id) {
+    throw createAuthorizationError('Ban can dang nhap truoc khi tao don hang')
+  }
+
   if (!Array.isArray(payload.items) || payload.items.length === 0) {
-    throw new Error('Đơn hàng phải có ít nhất một sản phẩm')
+    throw new Error('Don hang phai co it nhat mot san pham')
   }
 
   const productIds = payload.items.map((item) => item.productId)
@@ -22,26 +42,32 @@ async function createOrder(payload) {
 
   const normalizedItems = payload.items.map((item) => {
     const quantity = Number(item.quantity || 0)
+
     if (!item.productId || !Number.isFinite(quantity) || quantity <= 0) {
-      throw new Error('Thông tin sản phẩm trong đơn hàng không hợp lệ')
+      const error = new Error('Thong tin san pham trong don hang khong hop le')
+      error.statusCode = 422
+      throw error
     }
 
     const dbPrice = productMap.get(item.productId)
-    const fallbackPrice = Number(item.price || 0)
-    const unitPrice = Number.isFinite(dbPrice) ? dbPrice : fallbackPrice
+    if (!Number.isFinite(dbPrice)) {
+      const error = new Error(`Khong tim thay san pham ${item.productId}`)
+      error.statusCode = 404
+      throw error
+    }
 
     return {
       productId: item.productId,
       quantity,
-      price: unitPrice,
+      price: dbPrice,
     }
   })
 
   const totalAmount = normalizedItems.reduce((total, item) => total + item.price * item.quantity, 0)
 
   const createdOrder = await Order.create({
-    id: `OD-${Math.floor(1000 + Math.random() * 9000)}`,
-    userId: payload.userId || 'guest',
+    id: `OD-${Date.now()}`,
+    userId: authUser.id,
     items: normalizedItems,
     paymentMethod: payload.paymentMethod || 'cod',
     shippingAddress: payload.shippingAddress || {},

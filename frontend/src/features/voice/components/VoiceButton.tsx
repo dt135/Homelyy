@@ -1,4 +1,4 @@
-type VoiceButtonProps = {
+﻿type VoiceButtonProps = {
   isListening: boolean
   isSupported: boolean
   onStart: () => void

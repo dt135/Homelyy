@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+﻿import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useCart } from '../../hooks/useCart'
 import { useTheme } from '../../hooks/useTheme'
@@ -12,24 +12,35 @@ function Header() {
   const { user, isAuthenticated, logout } = useAuth()
   const { totalItems } = useCart()
   const { theme, toggleTheme } = useTheme()
+  const navigate = useNavigate()
   const isDark = theme === 'dark'
 
+  function handleLogout() {
+    logout()
+    navigate('/login')
+  }
+
   return (
-    <header className="site-header">
-      <div className="container header-row">
-        <NavLink to="/" className="brand">
-          Homelyy
+    <header className="site-header nebula-header-shell">
+      <div className="container header-row nebula-header-row">
+        <NavLink to="/" className="brand nebula-brand">
+          <span className="nebula-brand-mark" aria-hidden="true">
+            <span className="nebula-brand-dot" />
+          </span>
+          <span className="nebula-brand-copy">
+            <strong>Homelyy</strong>
+          </span>
         </NavLink>
 
-        <nav aria-label="Điều hướng chính">
-          <ul className="nav-list">
+        <nav aria-label="Điều hướng chính" className="nebula-nav-wrap">
+          <ul className="nav-list nebula-nav-list">
             {navItems.map((item) => (
               <li key={item.to}>
                 <NavLink
                   to={item.to}
                   end={item.end}
                   className={({ isActive }) =>
-                    isActive ? 'nav-link is-active' : 'nav-link'
+                    isActive ? 'nav-link nebula-nav-link is-active' : 'nav-link nebula-nav-link'
                   }
                 >
                   {item.label}
@@ -39,7 +50,7 @@ function Header() {
           </ul>
         </nav>
 
-        <div className="header-actions">
+        <div className="header-actions nebula-header-actions">
           <button
             type="button"
             className="ghost-btn theme-toggle"
@@ -118,12 +129,12 @@ function Header() {
                   </span>
                 </NavLink>
               ) : null}
-              <button type="button" className="ghost-btn" onClick={logout}>
+              <button type="button" className="primary-btn nebula-header-cta" onClick={handleLogout}>
                 Đăng xuất
               </button>
             </>
           ) : (
-            <NavLink to="/login" className="ghost-btn">
+            <NavLink to="/login" className="primary-btn nebula-header-cta">
               Đăng nhập
             </NavLink>
           )}

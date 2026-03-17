@@ -1,4 +1,4 @@
-import type { ProductQuery } from '../../../types/product'
+﻿import type { ProductQuery } from '../../../types/product'
 
 type SortOption = NonNullable<ProductQuery['sort']>
 

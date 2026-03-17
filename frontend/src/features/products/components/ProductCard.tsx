@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+﻿import { Link } from 'react-router-dom'
 import { useCart } from '../../../hooks/useCart'
 import type { Product } from '../../../types/product'
 import { isLikelyImageUrl } from '../../../utils/images'

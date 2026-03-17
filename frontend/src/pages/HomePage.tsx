@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import BrandsSection from '../features/home/components/BrandsSection'
 import CtaSection from '../features/home/components/CtaSection'
 import HeroBanner from '../features/home/components/HeroBanner'
@@ -44,15 +44,15 @@ function HomePage() {
       {!isLoading && errorMessage ? <div className="state-card">{errorMessage}</div> : null}
 
       <ProductShowcaseSection
-        eyebrow="Gợi ý nổi bật"
+        eyebrow="Bán chạy tuần này"
         title="Sản phẩm nổi bật"
         description="Nhóm sản phẩm được mua nhiều trong tuần này, ưu tiên cho nhu cầu gia đình hiện đại."
         products={featuredProducts}
         mode="featured"
       />
       <ProductShowcaseSection
-        eyebrow="Mới cập nhật"
-        title="Sản phẩm mới"
+        eyebrow="Vừa lên kệ"
+        title="Mẫu mới về"
         description="Các mẫu vừa cập nhật với thiết kế tối giản, dễ kết hợp vào không gian sống hiện đại."
         products={newProducts}
         mode="new"

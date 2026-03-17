@@ -3,6 +3,7 @@ const Order = require('../models/OrderModel')
 const Product = require('../models/ProductModel')
 const Review = require('../models/ReviewModel')
 const User = require('../models/UserModel')
+const { ensureStoredPassword } = require('../utils/password')
 const seedData = require('./seedData')
 
 async function upsertById(Model, payload) {
@@ -33,7 +34,12 @@ async function seedCollectionIfEmpty(Model, payload) {
 }
 
 async function seedDatabase() {
-  await upsertById(User, seedData.users)
+  const seededUsers = seedData.users.map((user) => ({
+    ...user,
+    password: ensureStoredPassword(user.password),
+  }))
+
+  await upsertById(User, seededUsers)
   await upsertById(Category, seedData.categories)
   await upsertById(Product, seedData.products)
   await seedCollectionIfEmpty(Order, seedData.orders)

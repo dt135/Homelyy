@@ -1,4 +1,4 @@
-type FilterSidebarProps = {
+﻿type FilterSidebarProps = {
   categories: string[]
   brands: string[]
   selectedCategory: string

@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   BrandSpotlight,
   CategorySpotlight,
   ProductSpotlight,
@@ -10,28 +10,28 @@ export const categories: CategorySpotlight[] = [
     id: 'kitchen',
     name: 'Nhà bếp thông minh',
     description: 'Nồi chiên, máy xay, lò nướng và thiết bị giúp tiết kiệm thời gian nấu.',
-    imageLabel: 'Kitchen Set',
+    imageLabel: 'Góc bếp',
     commandHint: 'Lệnh voice: lọc danh mục nhà bếp',
   },
   {
     id: 'cleaning',
     name: 'Vệ sinh nhà cửa',
     description: 'Máy hút bụi, máy lau nhà và dụng cụ giúp dọn dẹp nhẹ nhàng hơn.',
-    imageLabel: 'Cleaning Gear',
+    imageLabel: 'Thiết bị vệ sinh',
     commandHint: 'Lệnh voice: lọc danh mục vệ sinh',
   },
   {
     id: 'air-care',
     name: 'Không khí và sức khỏe',
     description: 'Máy lọc không khí, máy hút ẩm và thiết bị kiểm soát nhiệt độ.',
-    imageLabel: 'Air Care',
+    imageLabel: 'Chăm sóc không khí',
     commandHint: 'Lệnh voice: lọc danh mục không khí',
   },
   {
     id: 'smart-living',
     name: 'Nhà thông minh',
     description: 'Thiết bị kết nối app và voice, dễ đồng bộ cho một căn nhà thông minh.',
-    imageLabel: 'Smart Home',
+    imageLabel: 'Nhà thông minh',
     commandHint: 'Lệnh voice: tìm nhà thông minh',
   },
 ]
@@ -45,7 +45,7 @@ export const featuredProducts: ProductSpotlight[] = [
     oldPrice: 2990000,
     rating: 4.8,
     sold: 326,
-    tag: 'Best Seller',
+    tag: 'Bán chạy',
   },
   {
     id: 'vc-x2',
@@ -54,7 +54,7 @@ export const featuredProducts: ProductSpotlight[] = [
     price: 3290000,
     rating: 4.7,
     sold: 204,
-    tag: 'Top Rated',
+    tag: 'Đánh giá cao',
   },
   {
     id: 'bl-pro',
@@ -63,7 +63,7 @@ export const featuredProducts: ProductSpotlight[] = [
     price: 1490000,
     rating: 4.6,
     sold: 189,
-    tag: 'Popular',
+    tag: 'Phổ biến',
   },
   {
     id: 'ac-guard',
@@ -73,7 +73,7 @@ export const featuredProducts: ProductSpotlight[] = [
     oldPrice: 4590000,
     rating: 4.9,
     sold: 141,
-    tag: 'Premium',
+    tag: 'Cao cấp',
   },
 ]
 
@@ -85,7 +85,7 @@ export const newArrivals: ProductSpotlight[] = [
     price: 2890000,
     rating: 4.5,
     sold: 58,
-    tag: 'New',
+    tag: 'Mới',
   },
   {
     id: 'dry-flow',
@@ -94,7 +94,7 @@ export const newArrivals: ProductSpotlight[] = [
     price: 2390000,
     rating: 4.4,
     sold: 42,
-    tag: 'New',
+    tag: 'Mới',
   },
   {
     id: 'steam-go',
@@ -103,7 +103,7 @@ export const newArrivals: ProductSpotlight[] = [
     price: 990000,
     rating: 4.3,
     sold: 67,
-    tag: 'Hot',
+    tag: 'Nổi bật',
   },
   {
     id: 'light-eco',
@@ -112,7 +112,7 @@ export const newArrivals: ProductSpotlight[] = [
     price: 790000,
     rating: 4.6,
     sold: 73,
-    tag: 'Trend',
+    tag: 'Xu hướng',
   },
 ]
 
@@ -120,27 +120,27 @@ export const brands: BrandSpotlight[] = [
   {
     id: 'nova',
     name: 'Nova Home',
-    slogan: 'Clean design for daily comfort',
+    slogan: 'Thiết kế gọn gàng cho nhịp sống thoải mái mỗi ngày',
   },
   {
     id: 'aeris',
     name: 'Aeris',
-    slogan: 'Breathing technology for urban homes',
+    slogan: 'Công nghệ không khí cho ngôi nhà đô thị',
   },
   {
     id: 'modena',
     name: 'Modena Kitchen',
-    slogan: 'Kitchen workflow reimagined',
+    slogan: 'Tối ưu lại trải nghiệm bếp núc hằng ngày',
   },
   {
     id: 'swift',
     name: 'Swift Electric',
-    slogan: 'Reliable power in every routine',
+    slogan: 'Nguồn điện bền bỉ cho mọi sinh hoạt',
   },
   {
     id: 'hush',
     name: 'HushCare',
-    slogan: 'Quiet devices for calm spaces',
+    slogan: 'Thiết bị êm ái cho không gian thư thái',
   },
 ]
 

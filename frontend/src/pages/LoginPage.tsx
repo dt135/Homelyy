@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -11,7 +11,7 @@ function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const [email, setEmail] = useState('demo@homelyy.local')
-  const [password, setPassword] = useState('123456')
+  const [password, setPassword] = useState('demo1234')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -67,12 +67,13 @@ function LoginPage() {
           />
         </label>
         {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
-        <button type="submit" className="primary-btn">
+        <button type="submit" className="primary-btn" disabled={isSubmitting}>
           {isSubmitting ? 'Đang xử lý...' : 'Đăng nhập'}
         </button>
         <p>
           Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
         </p>
+        <p className="catalog-muted">User demo: demo@homelyy.local / demo1234</p>
         <p className="catalog-muted">Admin demo: admin@homelyy.local / admin123</p>
       </form>
     </section>

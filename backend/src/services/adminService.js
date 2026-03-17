@@ -4,6 +4,7 @@ const Product = require('../models/ProductModel')
 const User = require('../models/UserModel')
 const { destroyImagesByPublicIds } = require('./cloudinaryService')
 const { sanitizeDoc, sanitizeDocs } = require('../utils/mongoSanitize')
+const { hashPassword } = require('../utils/password')
 const {
   normalizeEmail,
   normalizePhone,
@@ -485,7 +486,7 @@ async function createUserForAdmin(payload) {
     id,
     fullName,
     email,
-    password,
+    password: hashPassword(password),
     role,
     phone,
     avatarUrl: '',
@@ -550,7 +551,7 @@ async function updateUserForAdmin(userId, payload, authUserId) {
   }
 
   if (shouldUpdatePassword) {
-    user.password = validatePassword(input.password)
+    user.password = hashPassword(validatePassword(input.password))
   }
 
   if (shouldUpdateRole) {
@@ -897,3 +898,4 @@ module.exports = {
   updateOrderForAdmin,
   deleteOrderForAdmin,
 }
+
