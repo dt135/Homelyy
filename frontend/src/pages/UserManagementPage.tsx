@@ -1,5 +1,7 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import AdminUndoToast from '../components/feedback/AdminUndoToast'
+import { useDeferredDelete } from '../hooks/useDeferredDelete'
 import { useAuth } from '../hooks/useAuth'
 import {
   createAdminUser,
@@ -66,6 +68,9 @@ function UserManagementPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<UserForm>(initialForm)
   const formRef = useRef<HTMLFormElement | null>(null)
+  const { pendingDelete, remainingSeconds, queueDelete, undoDelete } = useDeferredDelete({
+    onCommitError: (error) => setErrorMessage(getErrorMessage(error)),
+  })
 
   async function loadUsers() {
     try {
@@ -183,17 +188,31 @@ function UserManagementPage() {
       return
     }
 
-    try {
-      setErrorMessage('')
-      await deleteAdminUser(targetUserId)
-      await loadUsers()
-
-      if (editingId === targetUserId) {
-        resetForm()
-      }
-    } catch (error) {
-      setErrorMessage(getErrorMessage(error))
+    const targetUser = users.find((item) => item.id === targetUserId)
+    if (!targetUser) {
+      return
     }
+
+    const targetIndex = users.findIndex((item) => item.id === targetUserId)
+
+    setErrorMessage('')
+    setUsers((previous) => previous.filter((item) => item.id !== targetUserId))
+
+    if (editingId === targetUserId) {
+      resetForm()
+    }
+
+    await queueDelete({
+      label: `Đã xoá người dùng "${targetUser.fullName}"`,
+      commit: () => deleteAdminUser(targetUserId).then(() => undefined),
+      rollback: () => {
+        setUsers((previous) => {
+          const next = [...previous]
+          next.splice(targetIndex, 0, targetUser)
+          return next
+        })
+      },
+    })
   }
 
   return (
@@ -328,8 +347,11 @@ function UserManagementPage() {
           </table>
         </div>
       ) : null}
+
+      {pendingDelete ? <AdminUndoToast message={pendingDelete.label} remainingSeconds={remainingSeconds} onUndo={undoDelete} /> : null}
     </section>
   )
 }
 
 export default UserManagementPage
+

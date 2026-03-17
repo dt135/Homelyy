@@ -1,5 +1,7 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import AdminUndoToast from '../components/feedback/AdminUndoToast'
+import { useDeferredDelete } from '../hooks/useDeferredDelete'
 import {
   createAdminCategory,
   deleteAdminCategory,
@@ -10,12 +12,10 @@ import {
 import { getErrorMessage } from '../services/apiClient'
 
 type CategoryForm = {
-  id: string
   name: string
 }
 
 const initialForm: CategoryForm = {
-  id: '',
   name: '',
 }
 
@@ -28,6 +28,9 @@ function CategoryManagementPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<CategoryForm>(initialForm)
   const formRef = useRef<HTMLFormElement | null>(null)
+  const { pendingDelete, remainingSeconds, queueDelete, undoDelete } = useDeferredDelete({
+    onCommitError: (error) => setErrorMessage(getErrorMessage(error)),
+  })
 
   async function loadCategories() {
     try {
@@ -44,7 +47,7 @@ function CategoryManagementPage() {
   }
 
   useEffect(() => {
-    loadCategories()
+    void loadCategories()
   }, [])
 
   const filteredCategories = useMemo(
@@ -75,7 +78,7 @@ function CategoryManagementPage() {
       if (editingId) {
         await updateAdminCategory(editingId, { name: form.name.trim() })
       } else {
-        await createAdminCategory({ id: form.id.trim() || undefined, name: form.name.trim() })
+        await createAdminCategory({ name: form.name.trim() })
       }
 
       await loadCategories()
@@ -89,7 +92,7 @@ function CategoryManagementPage() {
 
   function startEdit(category: AdminCategory) {
     setEditingId(category.id)
-    setForm({ id: category.id, name: category.name })
+    setForm({ name: category.name })
     requestAnimationFrame(() => {
       formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     })
@@ -101,17 +104,31 @@ function CategoryManagementPage() {
       return
     }
 
-    try {
-      setErrorMessage('')
-      await deleteAdminCategory(categoryId)
-      await loadCategories()
-
-      if (editingId === categoryId) {
-        resetForm()
-      }
-    } catch (error) {
-      setErrorMessage(getErrorMessage(error))
+    const targetCategory = categories.find((category) => category.id === categoryId)
+    if (!targetCategory) {
+      return
     }
+
+    const targetIndex = categories.findIndex((category) => category.id === categoryId)
+
+    setErrorMessage('')
+    setCategories((previous) => previous.filter((category) => category.id !== categoryId))
+
+    if (editingId === categoryId) {
+      resetForm()
+    }
+
+    await queueDelete({
+      label: `Đã xóa danh mục "${targetCategory.name}"`,
+      commit: () => deleteAdminCategory(categoryId).then(() => undefined),
+      rollback: () => {
+        setCategories((previous) => {
+          const next = [...previous]
+          next.splice(targetIndex, 0, targetCategory)
+          return next
+        })
+      },
+    })
   }
 
   return (
@@ -123,16 +140,6 @@ function CategoryManagementPage() {
         <h2>{editingId ? 'Cập nhật danh mục' : 'Tạo danh mục mới'}</h2>
 
         <div className="placeholder-grid">
-          {!editingId ? (
-            <label className="field">
-              <span>ID (tùy chọn)</span>
-              <input
-                value={form.id}
-                onChange={(event) => setForm((prev) => ({ ...prev, id: event.target.value }))}
-              />
-            </label>
-          ) : null}
-
           <label className="field">
             <span>Tên danh mục</span>
             <input
@@ -152,6 +159,10 @@ function CategoryManagementPage() {
             </button>
           ) : null}
         </div>
+
+        {!editingId ? (
+          <p className="helper-text">ID danh mục sẽ được hệ thống tự động tạo khi lưu.</p>
+        ) : null}
       </form>
 
       <label className="catalog-search">
@@ -190,7 +201,7 @@ function CategoryManagementPage() {
                       <button
                         type="button"
                         className="ghost-btn"
-                        onClick={() => handleDelete(category.id)}
+                        onClick={() => void handleDelete(category.id)}
                       >
                         Xóa
                       </button>
@@ -201,6 +212,14 @@ function CategoryManagementPage() {
             </tbody>
           </table>
         </div>
+      ) : null}
+
+      {pendingDelete ? (
+        <AdminUndoToast
+          message={pendingDelete.label}
+          remainingSeconds={remainingSeconds}
+          onUndo={undoDelete}
+        />
       ) : null}
     </section>
   )

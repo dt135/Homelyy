@@ -54,10 +54,6 @@ function AdminDashboardPage() {
       <div className="admin-section-head">
         <p className="eyebrow">Quản trị</p>
         <h1 className="page-title">Bảng điều khiển quản trị</h1>
-        <p className="page-copy">
-          Theo dõi nhanh sức khỏe vận hành của storefront, danh mục và đơn hàng trên một giao diện
-          đồng bộ với phong cách Nebula.
-        </p>
       </div>
 
       {isLoading ? <div className="state-card">Đang tải dữ liệu quản trị...</div> : null}
@@ -69,24 +65,6 @@ function AdminDashboardPage() {
             <p className="admin-kpi">{item.value}</p>
           </article>
         ))}
-      </div>
-
-      <div className="placeholder-grid admin-insight-grid">
-        <article className="placeholder-card admin-insight-card">
-          <p className="eyebrow">Snapshot</p>
-          <h2>Ưu tiên hôm nay</h2>
-          <p className="catalog-muted">
-            Theo dõi đơn chờ xử lý và rà lại tồn kho ở nhóm sản phẩm đang có lượt xem cao.
-          </p>
-        </article>
-        <article className="placeholder-card admin-insight-card">
-          <p className="eyebrow">Portfolio note</p>
-          <h2>Điểm cộng khi demo</h2>
-          <p className="catalog-muted">
-            Dashboard có số liệu thật giúp dự án trông gần production hơn khi trình bày trong CV và
-            phỏng vấn.
-          </p>
-        </article>
       </div>
     </section>
   )

@@ -28,7 +28,7 @@ function Header() {
             <span className="nebula-brand-dot" />
           </span>
           <span className="nebula-brand-copy">
-            <strong>Homelyy</strong>
+            <strong>HOMELYY</strong>
           </span>
         </NavLink>
 

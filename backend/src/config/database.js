@@ -1,6 +1,5 @@
-const env = require('./env')
+﻿const env = require('./env')
 const mongoose = require('mongoose')
-const { seedDatabase } = require('../seed/seedDatabase')
 
 async function connectDatabase() {
   if (!env.mongodbUri) {
@@ -10,10 +9,6 @@ async function connectDatabase() {
   await mongoose.connect(env.mongodbUri, {
     dbName: env.dbName,
   })
-
-  if (env.autoSeed) {
-    await seedDatabase()
-  }
 
   return mongoose.connection.name
 }

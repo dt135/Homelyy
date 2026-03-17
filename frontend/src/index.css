@@ -999,6 +999,24 @@ button:disabled,
   font-size: 0.9rem;
 }
 
+.form-alert {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.form-alert-error {
+  color: #8f1f1f;
+  border-color: rgba(198, 52, 52, 0.28);
+  background:
+    linear-gradient(145deg, rgba(255, 235, 235, 0.96), rgba(255, 244, 244, 0.94));
+  box-shadow: 0 12px 28px rgba(181, 44, 44, 0.12);
+}
+
 .admin-shell {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
@@ -1807,6 +1825,7 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   background: linear-gradient(145deg, var(--accent), var(--accent-strong));
   box-shadow: 0 14px 24px color-mix(in srgb, var(--accent) 24%, transparent);
 }
@@ -1825,8 +1844,20 @@ body {
 
 .nebula-brand-copy strong {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.2rem;
-  letter-spacing: 0.01em;
+  font-size: 1.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-transform: uppercase;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--brand-color) 88%, white),
+    color-mix(in srgb, var(--accent) 32%, var(--brand-color))
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
 .nebula-brand-copy small {
@@ -2036,6 +2067,32 @@ body {
 .admin-table .button-row .ghost-btn,
 .admin-table .button-row .primary-btn {
   padding-inline: 0.8rem;
+}
+
+.admin-undo-toast {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  max-width: min(420px, calc(100vw - 2rem));
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--bg-card) 94%, white);
+  box-shadow: var(--shadow-soft);
+}
+
+.admin-undo-toast p {
+  margin: 0;
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.admin-undo-toast .ghost-btn {
+  white-space: nowrap;
 }
 
 :root[data-theme='dark'] .admin-section-head,

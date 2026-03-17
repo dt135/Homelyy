@@ -22,6 +22,23 @@ async function upsertById(Model, payload) {
   await Model.bulkWrite(operations)
 }
 
+async function upsertCategories(payload) {
+  for (const item of payload) {
+    const existingCategory = await Category.findOne({
+      $or: [{ id: item.id }, { name: item.name }],
+    })
+
+    if (existingCategory) {
+      existingCategory.id = item.id
+      existingCategory.name = item.name
+      await existingCategory.save()
+      continue
+    }
+
+    await Category.create(item)
+  }
+}
+
 async function seedCollectionIfEmpty(Model, payload) {
   const total = await Model.countDocuments()
   if (total > 0) {
@@ -40,7 +57,7 @@ async function seedDatabase() {
   }))
 
   await upsertById(User, seededUsers)
-  await upsertById(Category, seedData.categories)
+  await upsertCategories(seedData.categories)
   await upsertById(Product, seedData.products)
   await seedCollectionIfEmpty(Order, seedData.orders)
   await seedCollectionIfEmpty(Review, seedData.reviews)

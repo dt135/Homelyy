@@ -1,4 +1,6 @@
 ﻿import { useEffect, useState } from 'react'
+import AdminUndoToast from '../components/feedback/AdminUndoToast'
+import { useDeferredDelete } from '../hooks/useDeferredDelete'
 import { deleteAdminOrder, fetchAdminOrders, updateAdminOrder } from '../services/adminService'
 import { getErrorMessage } from '../services/apiClient'
 import type { Order } from '../types/order'
@@ -9,6 +11,9 @@ function OrderManagementPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [pendingOrderId, setPendingOrderId] = useState('')
+  const { pendingDelete, remainingSeconds, queueDelete, undoDelete } = useDeferredDelete({
+    onCommitError: (error) => setErrorMessage(getErrorMessage(error)),
+  })
 
   async function loadOrders() {
     try {
@@ -25,7 +30,7 @@ function OrderManagementPage() {
   }
 
   useEffect(() => {
-    loadOrders()
+    void loadOrders()
   }, [])
 
   async function handleStatusChange(orderId: string, status: 'pending' | 'processing' | 'completed') {
@@ -47,16 +52,28 @@ function OrderManagementPage() {
       return
     }
 
-    try {
-      setPendingOrderId(orderId)
-      setErrorMessage('')
-      await deleteAdminOrder(orderId)
-      await loadOrders()
-    } catch (error) {
-      setErrorMessage(getErrorMessage(error))
-    } finally {
-      setPendingOrderId('')
+    const targetOrder = orders.find((order) => order.id === orderId)
+    const targetIndex = orders.findIndex((order) => order.id === orderId)
+    if (!targetOrder || targetIndex === -1) {
+      return
     }
+
+    setErrorMessage('')
+    setOrders((currentOrders) => currentOrders.filter((order) => order.id !== orderId))
+
+    await queueDelete({
+      label: `Đã xóa đơn hàng ${targetOrder.id}`,
+      commit: async () => {
+        await deleteAdminOrder(orderId)
+      },
+      rollback: () => {
+        setOrders((currentOrders) => {
+          const nextOrders = [...currentOrders]
+          nextOrders.splice(targetIndex, 0, targetOrder)
+          return nextOrders
+        })
+      },
+    })
   }
 
   return (
@@ -109,7 +126,7 @@ function OrderManagementPage() {
                     <button
                       type="button"
                       className="ghost-btn"
-                      onClick={() => handleDelete(order.id)}
+                      onClick={() => void handleDelete(order.id)}
                       disabled={pendingOrderId === order.id}
                     >
                       Xóa
@@ -120,6 +137,14 @@ function OrderManagementPage() {
             </tbody>
           </table>
         </div>
+      ) : null}
+
+      {pendingDelete ? (
+        <AdminUndoToast
+          message={pendingDelete.label}
+          remainingSeconds={remainingSeconds}
+          onUndo={undoDelete}
+        />
       ) : null}
     </section>
   )

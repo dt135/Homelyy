@@ -1,9 +1,13 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import AdminUndoToast from '../components/feedback/AdminUndoToast'
+import { useDeferredDelete } from '../hooks/useDeferredDelete'
 import {
   createAdminProduct,
   deleteAdminProduct,
+  fetchAdminCategories,
   fetchAdminProducts,
+  type AdminCategory,
   updateAdminProduct,
 } from '../services/adminService'
 import { getErrorMessage } from '../services/apiClient'
@@ -90,6 +94,7 @@ function mapProductToForm(product: Product): ProductForm {
 
 function ProductManagementPage() {
   const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<AdminCategory[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -101,6 +106,9 @@ function ProductManagementPage() {
   const [uploadedImagePreviewUrls, setUploadedImagePreviewUrls] = useState<string[]>([])
   const [selectedUploadedImageIndex, setSelectedUploadedImageIndex] = useState<number | null>(null)
   const formRef = useRef<HTMLFormElement | null>(null)
+  const { pendingDelete, remainingSeconds, queueDelete, undoDelete } = useDeferredDelete({
+    onCommitError: (error) => setErrorMessage(getErrorMessage(error)),
+  })
 
   async function loadProducts() {
     try {
@@ -116,8 +124,18 @@ function ProductManagementPage() {
     }
   }
 
+  async function loadCategories() {
+    try {
+      const payload = await fetchAdminCategories()
+      setCategories(payload)
+    } catch {
+      setCategories([])
+    }
+  }
+
   useEffect(() => {
-    loadProducts()
+    void loadProducts()
+    void loadCategories()
   }, [])
 
   const filteredProducts = useMemo(
@@ -151,6 +169,12 @@ function ProductManagementPage() {
     setForm((previous) => ({ ...previous, [key]: value }))
   }
 
+  function scrollToFormTop() {
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+
   function resetForm() {
     setEditingId(null)
     setForm(initialForm)
@@ -178,6 +202,7 @@ function ProductManagementPage() {
 
     if (!form.name.trim() || !form.description.trim() || !form.category.trim() || !form.brand.trim()) {
       setErrorMessage('Vui lòng nhập đủ tên, mô tả, danh mục và thương hiệu')
+      scrollToFormTop()
       return
     }
 
@@ -261,6 +286,7 @@ function ProductManagementPage() {
       resetForm()
     } catch (error) {
       setErrorMessage(getErrorMessage(error))
+      scrollToFormTop()
     } finally {
       setIsSubmitting(false)
     }
@@ -272,17 +298,31 @@ function ProductManagementPage() {
       return
     }
 
-    try {
-      setErrorMessage('')
-      await deleteAdminProduct(productId)
-      await loadProducts()
-
-      if (editingId === productId) {
-        resetForm()
-      }
-    } catch (error) {
-      setErrorMessage(getErrorMessage(error))
+    const targetProduct = products.find((product) => product.id === productId)
+    if (!targetProduct) {
+      return
     }
+
+    const targetIndex = products.findIndex((product) => product.id === productId)
+
+    setErrorMessage('')
+    setProducts((previous) => previous.filter((product) => product.id !== productId))
+
+    if (editingId === productId) {
+      resetForm()
+    }
+
+    await queueDelete({
+      label: `Đã xoá sản phẩm "${targetProduct.name}"`,
+      commit: () => deleteAdminProduct(productId).then(() => undefined),
+      rollback: () => {
+        setProducts((previous) => {
+          const next = [...previous]
+          next.splice(targetIndex, 0, targetProduct)
+          return next
+        })
+      },
+    })
   }
 
   function startEdit(product: Product) {
@@ -304,6 +344,8 @@ function ProductManagementPage() {
       <form ref={formRef} className="placeholder-card admin-product-form" onSubmit={handleSubmit}>
         <h2>{editingId ? 'Cập nhật sản phẩm' : 'Tạo sản phẩm mới'}</h2>
 
+        {errorMessage ? <div className="form-alert form-alert-error">{errorMessage}</div> : null}
+
         <div className="placeholder-grid">
           {!editingId ? (
             <label className="field">
@@ -319,8 +361,25 @@ function ProductManagementPage() {
 
           <label className="field">
             <span>Danh mục</span>
-            <input value={form.category} onChange={(event) => updateField('category', event.target.value)} />
+            <select
+              value={form.category}
+              onChange={(event) => updateField('category', event.target.value)}
+              disabled={categories.length === 0}
+            >
+              <option value="">
+                {categories.length === 0 ? 'Hãy tạo danh mục trước' : 'Chọn danh mục'}
+              </option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.name}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
           </label>
+
+          {categories.length === 0 ? (
+            <p className="helper-text">Hãy tạo danh mục trước khi thêm sản phẩm mới.</p>
+          ) : null}
 
           <label className="field">
             <span>Thương hiệu</span>
@@ -513,8 +572,6 @@ function ProductManagementPage() {
           onChange={(event) => setKeyword(event.target.value)}
         />
       </label>
-
-      {errorMessage ? <div className="state-card">{errorMessage}</div> : null}
       {isLoading ? <div className="state-card">Đang tải danh sách sản phẩm...</div> : null}
 
       {!isLoading ? (
@@ -558,8 +615,11 @@ function ProductManagementPage() {
           </table>
         </div>
       ) : null}
+
+      {pendingDelete ? <AdminUndoToast message={pendingDelete.label} remainingSeconds={remainingSeconds} onUndo={undoDelete} /> : null}
     </section>
   )
 }
 
 export default ProductManagementPage
+

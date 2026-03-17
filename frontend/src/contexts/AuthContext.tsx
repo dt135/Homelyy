@@ -9,6 +9,7 @@ import { readStorage, writeStorage } from '../utils/localStorage'
 type AuthContextValue = {
   user: SessionUser | null
   isAuthenticated: boolean
+  isAuthReady: boolean
   login: (payload: LoginPayload) => Promise<void>
   register: (payload: RegisterPayload) => Promise<void>
   logout: () => void
@@ -23,20 +24,23 @@ type AuthProviderProps = {
 
 function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<SessionUser | null>(null)
+  const [isAuthReady, setIsAuthReady] = useState(false)
 
   useEffect(() => {
     const initialUser = readStorage<SessionUser | null>(STORAGE_KEYS.authUser, null)
     if (initialUser && initialUser.token) {
       setUser(initialUser)
-      return
+    } else {
+      setUser(null)
     }
-    setUser(null)
+    setIsAuthReady(true)
   }, [])
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       isAuthenticated: Boolean(user?.token),
+      isAuthReady,
       login: async (payload) => {
         const loggedInUser = await loginService(payload)
         setUser(loggedInUser)
@@ -64,7 +68,7 @@ function AuthProvider({ children }: AuthProviderProps) {
         writeStorage(STORAGE_KEYS.authUser, nextUser)
       },
     }),
-    [user],
+    [isAuthReady, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

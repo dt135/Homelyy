@@ -13,9 +13,6 @@ function AdminLayout() {
       <aside className="admin-sidebar nebula-admin-sidebar">
         <p className="eyebrow">Quản trị</p>
         <h2 className="admin-sidebar-title">Bảng điều khiển</h2>
-        <p className="admin-sidebar-copy">
-          Khu vực vận hành Homelyy với giao diện đồng bộ cùng storefront Nebula.
-        </p>
 
         <nav className="admin-sidebar-nav" aria-label="Điều hướng quản trị">
           {adminNavigation.map((item) => (

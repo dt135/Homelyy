@@ -1,4 +1,4 @@
-const Category = require('../models/CategoryModel')
+﻿const Category = require('../models/CategoryModel')
 const Order = require('../models/OrderModel')
 const Product = require('../models/ProductModel')
 const User = require('../models/UserModel')
@@ -407,12 +407,12 @@ async function updateCategoryForAdmin(categoryId, payload) {
     throw new Error('Tên danh mục là bắt buộc')
   }
 
-  const existedCategory = await Category.findOne({
-    id: { $ne: categoryId },
+  const existedCategoryByName = await Category.findOne({
+    _id: { $ne: category._id },
     name: { $regex: `^${escapeRegex(nextName)}$`, $options: 'i' },
   }).select('id')
 
-  if (existedCategory) {
+  if (existedCategoryByName) {
     throw new Error('Danh mục đã tồn tại')
   }
 
