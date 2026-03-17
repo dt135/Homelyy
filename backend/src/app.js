@@ -7,10 +7,17 @@ const notFoundMiddleware = require('./middlewares/notFoundMiddleware')
 const routes = require('./routes')
 
 const app = express()
+const allowedOrigins = Array.from(new Set([env.clientUrl, ...env.corsAllowedOrigins].filter(Boolean)))
 
 app.use(
   cors({
-    origin: env.clientUrl,
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true)
+      }
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`))
+    },
     credentials: true,
   }),
 )
