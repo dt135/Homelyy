@@ -1,57 +1,63 @@
 # Homelyy
 
-Homelyy la du an full-stack e-commerce do dien gia dung, duoc xay dung theo huong portfolio/demo san pham. Du an tap trung vao trai nghiem mua sam ro rang, luong quan tri day du, va bo sung voice control de tang tinh trinh dien khi demo.
+Homelyy là dự án thương mại điện tử full-stack dành cho đồ điện gia dụng, được xây dựng theo hướng portfolio và demo sản phẩm. Dự án tập trung vào trải nghiệm mua sắm rõ ràng, luồng quản trị tương đối đầy đủ, đồng thời bổ sung điều khiển bằng giọng nói để tăng tính trình diễn khi demo hoặc phỏng vấn.
 
-## Tong quan
+## Mục tiêu dự án
 
-- Frontend cho khach hang va trang quan tri duoc xay dung voi React + TypeScript.
-- Backend cung cap REST API cho xac thuc, san pham, gio hang, don hang, nguoi dung va media.
-- MongoDB duoc dung de luu tru du lieu, Cloudinary duoc dung cho upload hinh anh.
-- Ho tro chay local va docker compose de phuc vu phat trien va deploy demo.
+- Xây dựng một ứng dụng e-commerce full-stack có thể chạy được end-to-end.
+- Thể hiện khả năng thiết kế giao diện, tổ chức code frontend và xây dựng REST API backend.
+- Mô phỏng các luồng nghiệp vụ phổ biến: xác thực, giỏ hàng, đặt hàng, quản trị sản phẩm và người dùng.
+- Chuẩn bị sẵn tài liệu, seed dữ liệu và cấu hình triển khai để thuận tiện khi review hoặc demo.
 
-## Tinh nang noi bat
+## Tổng quan tính năng
 
-### Nguoi dung
-- Dang ky, dang nhap va cap nhat ho so.
-- Xem danh sach san pham, chi tiet san pham va tim kiem.
-- Them vao gio hang, checkout va xem lich su don hang.
-- Dieu huong, tim kiem va loc san pham bang giong noi tren frontend.
+### Khu vực người dùng
 
-### Quan tri
-- Dashboard thong ke tong quan.
-- CRUD danh muc va san pham.
-- Quan ly don hang va nguoi dung.
-- Upload avatar va hinh san pham thong qua Cloudinary.
+- Đăng ký, đăng nhập và cập nhật thông tin hồ sơ.
+- Xem trang chủ, danh sách sản phẩm và chi tiết sản phẩm.
+- Tìm kiếm, lọc và sắp xếp sản phẩm.
+- Thêm sản phẩm vào giỏ hàng và thực hiện checkout.
+- Xem lịch sử đơn hàng sau khi đặt mua.
+- Điều hướng, tìm kiếm và lọc sản phẩm bằng giọng nói trên frontend.
 
-## Cong nghe su dung
+### Khu vực quản trị
 
-| Layer | Cong nghe |
+- Xem dashboard thống kê tổng quan.
+- Quản lý danh mục sản phẩm.
+- Quản lý sản phẩm với các thao tác thêm, sửa, xóa.
+- Quản lý đơn hàng và trạng thái xử lý.
+- Quản lý người dùng trong hệ thống.
+- Upload ảnh sản phẩm và ảnh đại diện thông qua Cloudinary.
+
+## Kiến trúc và công nghệ sử dụng
+
+| Thành phần | Công nghệ |
 | --- | --- |
 | Frontend | React 19, TypeScript, React Router, Vite |
-| Backend | Node.js, Express, Mongoose, JWT, Multer |
-| Media | Cloudinary |
+| Backend | Node.js, Express, Mongoose, JWT |
+| Media Upload | Multer, Cloudinary |
 | Database | MongoDB Atlas |
-| Deploy | Docker, Docker Compose, Nginx |
+| Triển khai | Docker, Docker Compose, Nginx |
 
-## Cau truc thu muc
+## Cấu trúc thư mục
 
 ```text
 .
-|-- backend/    # REST API va xu ly du lieu
-|-- frontend/   # Giao dien nguoi dung va admin
-|-- docs/       # Tai lieu phan tich, schema va API
-|-- deploy.md   # Ghi chu deploy
+|-- backend/      # API, business logic, model và seed dữ liệu
+|-- frontend/     # Giao diện người dùng và trang quản trị
+|-- docs/         # Tài liệu phân tích, luồng nghiệp vụ, schema và API
+|-- deploy.md     # Ghi chú triển khai
 `-- README.md
 ```
 
-## Tai khoan demo
+## Tài khoản demo
 
-- User: `demo@homelyy.local` / `demo1234`
-- Admin: `admin@homelyy.local` / `admin123`
+- Người dùng: `demo@homelyy.local` / `demo1234`
+- Quản trị viên: `admin@homelyy.local` / `admin123`
 
-## Chay du an local
+## Hướng dẫn chạy dự án local
 
-### 1. Tao file moi truong
+### 1. Tạo file môi trường
 
 ```powershell
 Copy-Item .env.example .env
@@ -59,16 +65,16 @@ Copy-Item backend\.env.example backend\.env
 Copy-Item frontend\.env.example frontend\.env
 ```
 
-### 2. Cau hinh bien moi truong
+### 2. Cấu hình biến môi trường
 
-Cap nhat toi thieu cac bien sau:
+Cập nhật tối thiểu các biến sau:
 
-- `MONGODB_URI` trong `.env` va `backend/.env`
+- `MONGODB_URI` trong `.env` và `backend/.env`
 - `JWT_SECRET` cho backend
-- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` neu can upload anh
-- `VITE_API_BASE_URL` trong `frontend/.env` neu thay doi cong backend
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` nếu cần upload ảnh
+- `VITE_API_BASE_URL` trong `frontend/.env` nếu thay đổi cổng backend
 
-### 3. Cai dependencies
+### 3. Cài đặt dependencies
 
 ```powershell
 cd backend
@@ -78,47 +84,47 @@ cd ..\frontend
 npm install
 ```
 
-### 4. Khoi dong backend
+### 4. Khởi động backend
 
 ```powershell
 cd backend
 npm run dev
 ```
 
-Backend mac dinh: `http://localhost:4000`
+Backend mặc định chạy tại: `http://localhost:4000`
 
-### 5. Khoi dong frontend
+### 5. Khởi động frontend
 
 ```powershell
 cd frontend
 npm run dev
 ```
 
-Frontend mac dinh: `http://localhost:5173`
+Frontend mặc định chạy tại: `http://localhost:5173`
 
-## Seed du lieu
+## Seed dữ liệu mẫu
 
-Neu `AUTO_SEED=true`, backend se tu dong seed du lieu mau khi khoi dong voi database rong.
+Nếu `AUTO_SEED=true`, backend sẽ tự động seed dữ liệu khi khởi động với database rỗng.
 
-Ban cung co the seed thu cong:
+Bạn cũng có thể seed thủ công:
 
 ```powershell
 cd backend
 npm run db:seed
 ```
 
-## Chay bang Docker
+## Chạy bằng Docker
 
 ```powershell
 docker compose up --build
 ```
 
-Mac dinh:
+Mặc định:
 
 - Frontend: `http://localhost:8080`
 - Backend: `http://localhost:4000`
 
-## Bien moi truong chinh
+## Biến môi trường chính
 
 ### Root `.env`
 
@@ -148,33 +154,52 @@ Mac dinh:
 
 - `VITE_API_BASE_URL=http://localhost:4000/api`
 
-## Scripts chinh
+## Scripts chính
 
 ### Backend
 
-- `npm run dev`: chay backend voi nodemon
-- `npm start`: chay backend o che do production
-- `npm run db:seed`: seed du lieu mau
+- `npm run dev`: chạy backend với nodemon
+- `npm start`: chạy backend ở chế độ production
+- `npm run lint`: kiểm tra lint backend theo cấu hình hiện tại
+- `npm run db:seed`: seed dữ liệu mẫu
 
 ### Frontend
 
-- `npm run dev`: chay Vite dev server
+- `npm run dev`: chạy Vite development server
 - `npm run build`: build production
-- `npm run lint`: kiem tra lint
-- `npm run typecheck`: kiem tra TypeScript
+- `npm run lint`: kiểm tra ESLint
+- `npm run typecheck`: kiểm tra TypeScript
+- `npm run preview`: preview bản build production
 
-## Checklist truoc khi push/deploy
+## Luồng nghiệp vụ chính
 
-- Kiem tra ket noi MongoDB thanh cong.
-- Kiem tra luong dang nhap user/admin.
-- Kiem tra CRUD san pham va don hang.
-- Kiem tra upload anh neu da cau hinh Cloudinary.
-- Chay `npm run lint` trong `frontend`.
-- Chay `npm run typecheck` trong `frontend`.
+1. Người dùng duyệt sản phẩm từ trang chủ hoặc trang danh sách.
+2. Người dùng tìm kiếm, lọc, xem chi tiết sản phẩm và thêm vào giỏ hàng.
+3. Người dùng đăng nhập để thực hiện checkout và tạo đơn hàng.
+4. Người dùng theo dõi lịch sử đơn hàng trong tài khoản cá nhân.
+5. Quản trị viên đăng nhập để quản lý sản phẩm, danh mục, đơn hàng và người dùng.
 
-## Tai lieu tham khao
+## Chất lượng và kiểm tra trước khi deploy
+
+- Kiểm tra kết nối MongoDB thành công.
+- Kiểm tra luồng đăng ký và đăng nhập cho cả user và admin.
+- Kiểm tra CRUD danh mục, sản phẩm, đơn hàng và người dùng.
+- Kiểm tra upload ảnh nếu đã cấu hình Cloudinary.
+- Chạy `npm run lint` trong `frontend`.
+- Chạy `npm run typecheck` trong `frontend`.
+- Build frontend production để xác nhận không có lỗi đóng gói.
+
+## Tài liệu tham khảo trong dự án
 
 - `docs/phase-roadmap.md`
 - `docs/scope-and-flow.md`
 - `docs/database-schema.md`
 - `docs/rest-api.md`
+
+## Định hướng phát triển thêm
+
+- Tích hợp cổng thanh toán thực tế như MoMo UAT hoặc VNPay.
+- Bổ sung kiểm tra tồn kho chặt chẽ hơn ở bước đặt hàng.
+- Thêm test cho các luồng nghiệp vụ quan trọng.
+- Nâng cấp dashboard quản trị với biểu đồ và thống kê chi tiết hơn.
+- Hoàn thiện quy trình deploy production và giám sát lỗi.
