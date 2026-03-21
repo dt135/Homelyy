@@ -32,8 +32,10 @@ function LoginPage() {
     try {
       setIsSubmitting(true)
       setErrorMessage('')
-      await login({ email: normalizeEmail(email), password })
-      const nextPath = (location.state as { from?: string } | null)?.from ?? '/'
+      const loggedInUser = await login({ email: normalizeEmail(email), password })
+      const nextPath =
+        (location.state as { from?: string } | null)?.from ??
+        (loggedInUser.role === 'admin' ? '/admin' : '/')
       navigate(nextPath)
     } catch (error) {
       setErrorMessage(getErrorMessage(error))

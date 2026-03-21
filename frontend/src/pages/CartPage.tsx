@@ -1,16 +1,23 @@
 ﻿import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import type { ChangeEvent, KeyboardEvent } from 'react'
+import { useAuth } from '../hooks/useAuth'
 import { useCart } from '../hooks/useCart'
 import { isLikelyImageUrl } from '../utils/images'
 import { vndFormatter } from '../utils/formatters'
 import { formatRemainingStock, getStockStatus } from '../utils/stock'
 
 function CartPage() {
+  const { user, isAuthReady } = useAuth()
   const { lineItems, subtotal, increaseQty, decreaseQty, setQuantity, removeFromCart } = useCart()
   const hasBlockingStockIssue = lineItems.some((item) => item.stock <= 0 || item.quantity > item.stock)
   const [quantityInputs, setQuantityInputs] = useState<Record<string, string>>({})
   const [itemMessages, setItemMessages] = useState<Record<string, string>>({})
+
+  if (isAuthReady && user?.role === 'admin') {
+    window.location.replace('/admin')
+    return null
+  }
 
   useEffect(() => {
     setQuantityInputs((previous) => {

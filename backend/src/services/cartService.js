@@ -1,4 +1,4 @@
-const Cart = require('../models/CartModel')
+﻿const Cart = require('../models/CartModel')
 const Product = require('../models/ProductModel')
 
 function createValidationError(message, statusCode = 422) {
@@ -7,16 +7,26 @@ function createValidationError(message, statusCode = 422) {
   return error
 }
 
-async function getCart(userId) {
+function assertCustomerUser(authUser) {
+  if (!authUser?.id) {
+    throw createValidationError('Thiếu thông tin người dùng', 401)
+  }
+
+  if (authUser.role === 'admin') {
+    throw createValidationError('Tài khoản admin không được sử dụng giỏ hàng', 403)
+  }
+
+  return authUser.id
+}
+
+async function getCart(authUser) {
+  const userId = assertCustomerUser(authUser)
   const cart = await Cart.findOne({ userId })
   return cart ? cart.items : []
 }
 
-async function updateCart(userId, items) {
-  if (!userId) {
-    throw new Error('Thiếu userId để cập nhật giỏ hàng')
-  }
-
+async function updateCart(authUser, items) {
+  const userId = assertCustomerUser(authUser)
   const nextItems = Array.isArray(items) ? items : []
   const productIds = nextItems.map((item) => item.productId)
   const products = await Product.find({ id: { $in: productIds } }).select('id name stock')
@@ -27,19 +37,19 @@ async function updateCart(userId, items) {
     const product = productMap.get(item.productId)
 
     if (!item.productId || !Number.isInteger(quantity) || quantity <= 0) {
-      throw createValidationError('Thong tin gio hang khong hop le')
+      throw createValidationError('Thông tin giỏ hàng không hợp lệ')
     }
 
     if (!product) {
-      throw createValidationError(`Khong tim thay san pham ${item.productId}`, 404)
+      throw createValidationError(`Không tìm thấy sản phẩm ${item.productId}`, 404)
     }
 
     if (Number(product.stock || 0) <= 0) {
-      throw createValidationError(`${product.name || item.productId} da het hang`, 409)
+      throw createValidationError(`${product.name || item.productId} đã hết hàng`, 409)
     }
 
     if (quantity > Number(product.stock || 0)) {
-      throw createValidationError(`${product.name || item.productId} chi con ${product.stock} san pham trong kho`, 409)
+      throw createValidationError(`${product.name || item.productId} chỉ còn ${product.stock} sản phẩm trong kho`, 409)
     }
   })
 

@@ -36,7 +36,8 @@ function CartProvider({ children }: CartProviderProps) {
   const auth = useContext(AuthContext)
   const [items, setItems] = useState<CartItem[]>([])
   const [products, setProducts] = useState<Product[]>([])
-  const activeUserId = auth?.user?.id || null
+  const isAdminUser = auth?.user?.role === 'admin'
+  const activeUserId = !isAdminUser ? auth?.user?.id || null : null
   const cartProductIdsKey = useMemo(
     () => [...new Set(items.map((item) => item.productId).filter(Boolean))].sort().join('|'),
     [items],
@@ -189,7 +190,7 @@ function CartProvider({ children }: CartProviderProps) {
       subtotal,
       addToCart: (productId, quantity = 1, stockOverride) => {
         setItems((previous) => {
-          if (!activeUserId) {
+          if (!activeUserId || isAdminUser) {
             return previous
           }
 
@@ -234,7 +235,7 @@ function CartProvider({ children }: CartProviderProps) {
       },
       increaseQty: (productId) => {
         setItems((previous) => {
-          if (!activeUserId) {
+          if (!activeUserId || isAdminUser) {
             return previous
           }
 
@@ -271,7 +272,7 @@ function CartProvider({ children }: CartProviderProps) {
       },
       setQuantity: (productId, quantity) => {
         setItems((previous) => {
-          if (!activeUserId) {
+          if (!activeUserId || isAdminUser) {
             return previous
           }
 
@@ -291,7 +292,7 @@ function CartProvider({ children }: CartProviderProps) {
         setItems([])
       },
     }
-  }, [activeUserId, items, products])
+  }, [activeUserId, isAdminUser, items, products])
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }

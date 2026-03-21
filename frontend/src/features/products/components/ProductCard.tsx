@@ -12,13 +12,20 @@ type ProductCardProps = {
 }
 
 function ProductCard({ product }: ProductCardProps) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const { addToCart } = useCart()
   const navigate = useNavigate()
   const location = useLocation()
   const stockStatus = getStockStatus(product.stock)
+  const isAdminUser = user?.role === 'admin'
+  const canAddToCart = stockStatus.canPurchase && !isAdminUser
 
   function handleAddToCart() {
+    if (isAdminUser) {
+      navigate('/admin')
+      return
+    }
+
     if (!isAuthenticated) {
       navigate('/login', {
         state: {
@@ -63,9 +70,9 @@ function ProductCard({ product }: ProductCardProps) {
           type="button"
           className="primary-btn"
           onClick={handleAddToCart}
-          disabled={!stockStatus.canPurchase}
+          disabled={!canAddToCart}
         >
-          {stockStatus.canPurchase ? 'Thêm vào giỏ' : 'Hết hàng'}
+          {!stockStatus.canPurchase ? 'Hết hàng' : isAdminUser ? 'Dành cho khách hàng' : 'Thêm vào giỏ'}
         </button>
         <Link to={`/products/${product.id}`} className="ghost-btn">
           Chi tiết

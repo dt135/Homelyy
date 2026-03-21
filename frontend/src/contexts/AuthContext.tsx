@@ -10,8 +10,8 @@ type AuthContextValue = {
   user: SessionUser | null
   isAuthenticated: boolean
   isAuthReady: boolean
-  login: (payload: LoginPayload) => Promise<void>
-  register: (payload: RegisterPayload) => Promise<void>
+  login: (payload: LoginPayload) => Promise<SessionUser>
+  register: (payload: RegisterPayload) => Promise<SessionUser>
   logout: () => void
   updateProfile: (payload: { fullName: string; phone?: string; avatarFile?: File | null }) => Promise<void>
 }
@@ -53,11 +53,13 @@ function AuthProvider({ children }: AuthProviderProps) {
         const loggedInUser = await loginService(payload)
         setUser(loggedInUser)
         writeStorage(STORAGE_KEYS.authUser, loggedInUser)
+        return loggedInUser
       },
       register: async (payload) => {
         const createdUser = await registerService(payload)
         setUser(createdUser)
         writeStorage(STORAGE_KEYS.authUser, createdUser)
+        return createdUser
       },
       logout: () => {
         setUser(null)

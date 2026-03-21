@@ -62,7 +62,7 @@ export const appRouter = createBrowserRouter([
       },
       {
         path: 'orders',
-        element: <ProtectedRoute />,
+        element: <ProtectedRoute allowAdmin={false} redirectAuthenticatedTo="/admin" />,
         children: [
           {
             index: true,
@@ -72,7 +72,7 @@ export const appRouter = createBrowserRouter([
       },
       {
         path: 'checkout',
-        element: <ProtectedRoute />,
+        element: <ProtectedRoute allowAdmin={false} redirectAuthenticatedTo="/admin" />,
         children: [
           {
             index: true,

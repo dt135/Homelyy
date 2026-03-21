@@ -39,14 +39,12 @@ async function listOrders(authUser, requestedUserId) {
     throw createAuthorizationError('Ban can dang nhap de xem don hang')
   }
 
-  const filters = {}
-
   if (authUser.role === 'admin') {
-    if (requestedUserId) {
-      filters.userId = requestedUserId
-    }
-  } else {
-    filters.userId = authUser.id
+    throw createAuthorizationError('Tai khoan admin chi duoc quan ly don hang tai khu vuc admin')
+  }
+
+  const filters = {
+    userId: requestedUserId || authUser.id,
   }
 
   const orders = await Order.find(filters).sort({ createdAt: -1 })
@@ -56,6 +54,10 @@ async function listOrders(authUser, requestedUserId) {
 async function createOrder(authUser, payload) {
   if (!authUser?.id) {
     throw createAuthorizationError('Ban can dang nhap truoc khi tao don hang')
+  }
+
+  if (authUser.role === 'admin') {
+    throw createAuthorizationError('Tai khoan admin khong duoc phep dat hang')
   }
 
   if (!Array.isArray(payload.items) || payload.items.length === 0) {

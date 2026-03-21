@@ -11,7 +11,7 @@ import { formatRemainingStock, getStockStatus } from '../utils/stock'
 
 function ProductDetailPage() {
   const { productId } = useParams()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const { addToCart } = useCart()
   const navigate = useNavigate()
   const location = useLocation()
@@ -61,6 +61,8 @@ function ProductDetailPage() {
   const displayedMedia = galleryMedia[activeMediaIndex] || galleryMedia[defaultMediaIndex]
   const displayedImage = displayedMedia?.url || product?.thumbnail || ''
   const stockStatus = getStockStatus(product?.stock ?? 0)
+  const isAdminUser = user?.role === 'admin'
+  const canAddToCart = stockStatus.canPurchase && !isAdminUser
   const specEntries = useMemo(
     () => Object.entries(product?.specs ?? {}).filter(([key]) => key !== 'Äang cáº­p nháº­t'),
     [product],
@@ -99,6 +101,11 @@ function ProductDetailPage() {
 
   function handleAddToCart() {
     if (!product) {
+      return
+    }
+
+    if (isAdminUser) {
+      navigate('/admin')
       return
     }
 
@@ -192,9 +199,9 @@ function ProductDetailPage() {
                   type="button"
                   className="primary-btn"
                   onClick={handleAddToCart}
-                  disabled={!stockStatus.canPurchase}
+                  disabled={!canAddToCart}
                 >
-                  {stockStatus.canPurchase ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
+                  {!stockStatus.canPurchase ? 'Hết hàng' : isAdminUser ? 'Dành cho khách hàng' : 'Thêm vào giỏ hàng'}
                 </button>
                 <Link to="/products" className="ghost-btn">
                   Quay lại danh sách

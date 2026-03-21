@@ -17,6 +17,7 @@ function Header() {
   const location = useLocation()
   const navigate = useNavigate()
   const isDark = theme === 'dark'
+  const isAdminUser = user?.role === 'admin'
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -84,48 +85,52 @@ function Header() {
             </span>
           </button>
 
-          <NavLink
-            to="/cart"
-            className={({ isActive }) =>
-              isActive ? 'ghost-btn cart-link is-active' : 'ghost-btn cart-link'
-            }
-            aria-label={`Giỏ hàng (${totalItems} sản phẩm)`}
-            title="Giỏ hàng"
-          >
-            <span className="cart-link-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="presentation">
-                <circle cx="9" cy="20" r="1.4" />
-                <circle cx="17" cy="20" r="1.4" />
-                <path d="M3 4h2l2.2 10.2h10.4L20 8H7.4" />
-              </svg>
-            </span>
-            {totalItems > 0 ? (
-              <span className="cart-link-count">{totalItems > 99 ? '99+' : totalItems}</span>
-            ) : null}
-          </NavLink>
+          {!isAdminUser ? (
+            <NavLink
+              to="/cart"
+              className={({ isActive }) =>
+                isActive ? 'ghost-btn cart-link is-active' : 'ghost-btn cart-link'
+              }
+              aria-label={`Giỏ hàng (${totalItems} sản phẩm)`}
+              title="Giỏ hàng"
+            >
+              <span className="cart-link-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <circle cx="9" cy="20" r="1.4" />
+                  <circle cx="17" cy="20" r="1.4" />
+                  <path d="M3 4h2l2.2 10.2h10.4L20 8H7.4" />
+                </svg>
+              </span>
+              {totalItems > 0 ? (
+                <span className="cart-link-count">{totalItems > 99 ? '99+' : totalItems}</span>
+              ) : null}
+            </NavLink>
+          ) : null}
 
           {isAuthenticated ? (
             <>
-              <NavLink
-                to="/orders"
-                className={({ isActive }) =>
-                  isActive ? 'ghost-btn orders-link is-active' : 'ghost-btn orders-link'
-                }
-                aria-label="Quản lý đơn hàng"
-                title="Quản lý đơn hàng"
-              >
-                <span className="orders-link-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <rect x="3" y="3" width="18" height="18" rx="3" />
-                    <path d="M7 7h10" />
-                    <path d="M7 12h10" />
-                    <path d="M7 17h6" />
-                    <path d="M5.5 7h.01" />
-                    <path d="M5.5 12h.01" />
-                    <path d="M5.5 17h.01" />
-                  </svg>
-                </span>
-              </NavLink>
+              {!isAdminUser ? (
+                <NavLink
+                  to="/orders"
+                  className={({ isActive }) =>
+                    isActive ? 'ghost-btn orders-link is-active' : 'ghost-btn orders-link'
+                  }
+                  aria-label="Quản lý đơn hàng"
+                  title="Quản lý đơn hàng"
+                >
+                  <span className="orders-link-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" role="presentation">
+                      <rect x="3" y="3" width="18" height="18" rx="3" />
+                      <path d="M7 7h10" />
+                      <path d="M7 12h10" />
+                      <path d="M7 17h6" />
+                      <path d="M5.5 7h.01" />
+                      <path d="M5.5 12h.01" />
+                      <path d="M5.5 17h.01" />
+                    </svg>
+                  </span>
+                </NavLink>
+              ) : null}
               <NavLink
                 to="/profile"
                 className={({ isActive }) =>
