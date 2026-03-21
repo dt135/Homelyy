@@ -1,11 +1,14 @@
 ﻿import { useState } from 'react'
-import type { FormEvent } from 'react'
+import { useEffect, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCart } from '../hooks/useCart'
+import { getErrorMessage } from '../services/apiClient'
 import { createOrder } from '../services/orderService'
 import type { PaymentMethod } from '../types/order'
 import { vndFormatter } from '../utils/formatters'
+import { formatRemainingStock, getStockStatus } from '../utils/stock'
+import { normalizePhone, normalizeWhitespace } from '../utils/validators'
 
 type CheckoutForm = {
   fullName: string
@@ -31,9 +34,18 @@ function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cod')
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const invalidStockItems = lineItems.filter((item) => item.stock <= 0 || item.quantity > item.stock)
 
   const shippingFee = subtotal > 3000000 ? 0 : 35000
   const grandTotal = subtotal + shippingFee
+
+  useEffect(() => {
+    setForm((previous) => ({
+      ...previous,
+      fullName: previous.fullName || normalizeWhitespace(user?.fullName ?? ''),
+      phone: previous.phone || normalizePhone(user?.phone ?? ''),
+    }))
+  }, [user?.fullName, user?.phone])
 
   function updateField(field: keyof CheckoutForm, value: string) {
     setForm((previous) => ({ ...previous, [field]: value }))
@@ -48,6 +60,10 @@ function CheckoutPage() {
     }
     if (items.length === 0) {
       setErrorMessage('Giỏ hàng đang trống')
+      return
+    }
+    if (invalidStockItems.length > 0) {
+      setErrorMessage('Có sản phẩm đã hết hàng hoặc số lượng vượt tồn kho. Vui lòng quay lại giỏ hàng để điều chỉnh.')
       return
     }
 
@@ -75,8 +91,8 @@ function CheckoutPage() {
 
       clearCart()
       navigate(`/checkout/success?orderId=${created.id}`)
-    } catch {
-      setErrorMessage('Thanh toán thất bại. Vui lòng thử lại.')
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error))
     } finally {
       setIsSubmitting(false)
     }
@@ -125,8 +141,13 @@ function CheckoutPage() {
             </select>
           </label>
 
+          {invalidStockItems.length > 0 ? (
+            <p className="stock-note stock-note-out">
+              Có sản phẩm trong đơn hiện không còn đủ tồn kho. Vui lòng quay lại giỏ hàng để cập nhật trước khi đặt.
+            </p>
+          ) : null}
           {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
-          <button type="submit" className="primary-btn" disabled={isSubmitting}>
+          <button type="submit" className="primary-btn" disabled={isSubmitting || invalidStockItems.length > 0}>
             {isSubmitting ? 'Đang tạo đơn...' : 'Xác nhận đặt hàng'}
           </button>
         </form>
@@ -134,14 +155,26 @@ function CheckoutPage() {
         <aside className="cart-summary-card">
           <h2>Tóm tắt đơn hàng</h2>
           <div className="order-preview-list">
-            {lineItems.map((item) => (
-              <div key={item.productId} className="summary-row">
-                <span>
-                  {item.name} x {item.quantity}
-                </span>
-                <strong>{vndFormatter.format(item.price * item.quantity)}</strong>
-              </div>
-            ))}
+            {lineItems.map((item) => {
+              const stockStatus = getStockStatus(item.stock)
+
+              return (
+                <div key={item.productId} className="summary-row">
+                  <div>
+                    <span>
+                      {item.name} x {item.quantity}
+                    </span>
+                    <p className="catalog-muted">{formatRemainingStock(item.stock)}</p>
+                  </div>
+                  <div className="checkout-summary-item">
+                    <strong>{vndFormatter.format(item.price * item.quantity)}</strong>
+                    {stockStatus.label ? (
+                      <span className={`stock-badge stock-badge-${stockStatus.tone}`}>{stockStatus.label}</span>
+                    ) : null}
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
           <div className="summary-row">

@@ -4,6 +4,14 @@ const cloudinary = require('../config/cloudinary')
 
 const ALLOWED_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
+function sanitizePublicIdSegment(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
 function createFileFilter() {
   return (_req, file, callback) => {
     if (!ALLOWED_IMAGE_MIME_TYPES.has(file.mimetype)) {
@@ -28,8 +36,25 @@ function createStorage(folder) {
   })
 }
 
+function createAvatarStorage(folder) {
+  return new CloudinaryStorage({
+    cloudinary,
+    params: async (req, file) => {
+      const authUserId = sanitizePublicIdSegment(req.authUser?.id || 'guest')
+      const originalName = sanitizePublicIdSegment(file.originalname.replace(/\.[^.]+$/, '')) || 'avatar'
+
+      return {
+        folder,
+        resource_type: 'image',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+        public_id: `${authUserId}-${Date.now()}-${originalName}`,
+      }
+    },
+  })
+}
+
 const avatarUpload = multer({
-  storage: createStorage('homelyy/users/avatars'),
+  storage: createAvatarStorage('homelyy/users/avatars'),
   fileFilter: createFileFilter(),
   limits: {
     fileSize: 5 * 1024 * 1024,

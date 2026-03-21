@@ -1,15 +1,20 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
 import { useCart } from '../hooks/useCart'
 import { getErrorMessage } from '../services/apiClient'
 import { fetchProductById, fetchRelatedProducts } from '../services/productService'
 import type { Product, ProductMedia } from '../types/product'
 import { isLikelyImageUrl } from '../utils/images'
 import { vndFormatter } from '../utils/formatters'
+import { formatRemainingStock, getStockStatus } from '../utils/stock'
 
 function ProductDetailPage() {
   const { productId } = useParams()
+  const { isAuthenticated } = useAuth()
   const { addToCart } = useCart()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [product, setProduct] = useState<Product | null>(null)
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -55,6 +60,7 @@ function ProductDetailPage() {
 
   const displayedMedia = galleryMedia[activeMediaIndex] || galleryMedia[defaultMediaIndex]
   const displayedImage = displayedMedia?.url || product?.thumbnail || ''
+  const stockStatus = getStockStatus(product?.stock ?? 0)
   const specEntries = useMemo(
     () => Object.entries(product?.specs ?? {}).filter(([key]) => key !== 'Äang cáº­p nháº­t'),
     [product],
@@ -90,6 +96,23 @@ function ProductDetailPage() {
   useEffect(() => {
     setActiveMediaIndex(defaultMediaIndex)
   }, [defaultMediaIndex])
+
+  function handleAddToCart() {
+    if (!product) {
+      return
+    }
+
+    if (!isAuthenticated) {
+      navigate('/login', {
+        state: {
+          from: `${location.pathname}${location.search}`,
+        },
+      })
+      return
+    }
+
+    addToCart(product.id, 1, product.stock)
+  }
 
   return (
     <section className="page-stack reveal-up">
@@ -156,17 +179,22 @@ function ProductDetailPage() {
 
               <div className="product-meta">
                 <span>Đánh giá {product.rating}/5</span>
-                <span>Tồn kho {product.stock}</span>
+                <span>{formatRemainingStock(product.stock)}</span>
                 <span>Đã bán {product.sold}</span>
               </div>
+
+              {stockStatus.label ? (
+                <div className={`stock-badge stock-badge-${stockStatus.tone}`}>{stockStatus.label}</div>
+              ) : null}
 
               <div className="button-row">
                 <button
                   type="button"
                   className="primary-btn"
-                  onClick={() => addToCart(product.id)}
+                  onClick={handleAddToCart}
+                  disabled={!stockStatus.canPurchase}
                 >
-                  Thêm vào giỏ hàng
+                  {stockStatus.canPurchase ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
                 </button>
                 <Link to="/products" className="ghost-btn">
                   Quay lại danh sách

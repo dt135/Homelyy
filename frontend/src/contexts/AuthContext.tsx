@@ -22,6 +22,14 @@ type AuthProviderProps = {
   children: ReactNode
 }
 
+function withAvatarCacheBust(avatarUrl: string | undefined, cacheKey: number): string | undefined {
+  if (!avatarUrl) {
+    return avatarUrl
+  }
+
+  return `${avatarUrl}${avatarUrl.includes('?') ? '&' : '?'}v=${cacheKey}`
+}
+
 function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<SessionUser | null>(null)
   const [isAuthReady, setIsAuthReady] = useState(false)
@@ -60,8 +68,10 @@ function AuthProvider({ children }: AuthProviderProps) {
           throw new Error('Bạn cần đăng nhập trước')
         }
         const updatedUser = await updateProfileService(user.id, payload)
+        const cacheKey = payload.avatarFile ? Date.now() : null
         const nextUser: SessionUser = {
           ...updatedUser,
+          avatarUrl: cacheKey ? withAvatarCacheBust(updatedUser.avatarUrl, cacheKey) : updatedUser.avatarUrl,
           token: user.token,
         }
         setUser(nextUser)

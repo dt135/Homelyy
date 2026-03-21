@@ -107,6 +107,26 @@ function Header() {
           {isAuthenticated ? (
             <>
               <NavLink
+                to="/orders"
+                className={({ isActive }) =>
+                  isActive ? 'ghost-btn orders-link is-active' : 'ghost-btn orders-link'
+                }
+                aria-label="Quản lý đơn hàng"
+                title="Quản lý đơn hàng"
+              >
+                <span className="orders-link-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" role="presentation">
+                    <rect x="3" y="3" width="18" height="18" rx="3" />
+                    <path d="M7 7h10" />
+                    <path d="M7 12h10" />
+                    <path d="M7 17h6" />
+                    <path d="M5.5 7h.01" />
+                    <path d="M5.5 12h.01" />
+                    <path d="M5.5 17h.01" />
+                  </svg>
+                </span>
+              </NavLink>
+              <NavLink
                 to="/profile"
                 className={({ isActive }) =>
                   isActive ? 'ghost-btn profile-link is-active' : 'ghost-btn profile-link'

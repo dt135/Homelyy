@@ -1,15 +1,35 @@
 ﻿import { Link } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../../hooks/useAuth'
 import { useCart } from '../../../hooks/useCart'
 import type { Product } from '../../../types/product'
 import { isLikelyImageUrl } from '../../../utils/images'
 import { vndFormatter } from '../../../utils/formatters'
+import { formatRemainingStock, getStockStatus } from '../../../utils/stock'
 
 type ProductCardProps = {
   product: Product
 }
 
 function ProductCard({ product }: ProductCardProps) {
+  const { isAuthenticated } = useAuth()
   const { addToCart } = useCart()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const stockStatus = getStockStatus(product.stock)
+
+  function handleAddToCart() {
+    if (!isAuthenticated) {
+      navigate('/login', {
+        state: {
+          from: `${location.pathname}${location.search}`,
+        },
+      })
+      return
+    }
+
+    addToCart(product.id, 1, product.stock)
+  }
 
   return (
     <article className="catalog-product-card reveal-up">
@@ -31,12 +51,21 @@ function ProductCard({ product }: ProductCardProps) {
 
       <div className="product-meta">
         <span>Đánh giá {product.rating}/5</span>
-        <span>Tồn kho {product.stock}</span>
+        <span>{formatRemainingStock(product.stock)}</span>
       </div>
 
+      {stockStatus.label ? (
+        <div className={`stock-badge stock-badge-${stockStatus.tone}`}>{stockStatus.label}</div>
+      ) : null}
+
       <div className="button-row">
-        <button type="button" className="primary-btn" onClick={() => addToCart(product.id)}>
-          Thêm vào giỏ
+        <button
+          type="button"
+          className="primary-btn"
+          onClick={handleAddToCart}
+          disabled={!stockStatus.canPurchase}
+        >
+          {stockStatus.canPurchase ? 'Thêm vào giỏ' : 'Hết hàng'}
         </button>
         <Link to={`/products/${product.id}`} className="ghost-btn">
           Chi tiết

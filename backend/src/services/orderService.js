@@ -8,6 +8,32 @@ function createAuthorizationError(message) {
   return error
 }
 
+function createValidationError(message, statusCode = 422) {
+  const error = new Error(message)
+  error.statusCode = statusCode
+  return error
+}
+
+async function rollbackReservedStock(items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return
+  }
+
+  await Promise.all(
+    items.map((item) =>
+      Product.updateOne(
+        { id: item.productId },
+        {
+          $inc: {
+            stock: item.quantity,
+            sold: -item.quantity,
+          },
+        },
+      ),
+    ),
+  )
+}
+
 async function listOrders(authUser, requestedUserId) {
   if (!authUser?.id) {
     throw createAuthorizationError('Ban can dang nhap de xem don hang')
@@ -33,27 +59,34 @@ async function createOrder(authUser, payload) {
   }
 
   if (!Array.isArray(payload.items) || payload.items.length === 0) {
-    throw new Error('Don hang phai co it nhat mot san pham')
+    throw createValidationError('Don hang phai co it nhat mot san pham')
   }
 
   const productIds = payload.items.map((item) => item.productId)
-  const products = await Product.find({ id: { $in: productIds } }).select('id price')
-  const productMap = new Map(products.map((product) => [product.id, Number(product.price)]))
+  const products = await Product.find({ id: { $in: productIds } }).select('id name price stock sold')
+  const productMap = new Map(products.map((product) => [product.id, product]))
 
   const normalizedItems = payload.items.map((item) => {
     const quantity = Number(item.quantity || 0)
 
-    if (!item.productId || !Number.isFinite(quantity) || quantity <= 0) {
-      const error = new Error('Thong tin san pham trong don hang khong hop le')
-      error.statusCode = 422
-      throw error
+    if (!item.productId || !Number.isFinite(quantity) || quantity <= 0 || !Number.isInteger(quantity)) {
+      throw createValidationError('Thong tin san pham trong don hang khong hop le')
     }
 
-    const dbPrice = productMap.get(item.productId)
-    if (!Number.isFinite(dbPrice)) {
-      const error = new Error(`Khong tim thay san pham ${item.productId}`)
-      error.statusCode = 404
-      throw error
+    const product = productMap.get(item.productId)
+    if (!product) {
+      throw createValidationError(`Khong tim thay san pham ${item.productId}`, 404)
+    }
+
+    const dbPrice = Number(product.price || 0)
+    const dbStock = Number(product.stock || 0)
+
+    if (dbStock <= 0) {
+      throw createValidationError(`${product.name || item.productId} da het hang`, 409)
+    }
+
+    if (quantity > dbStock) {
+      throw createValidationError(`${product.name || item.productId} chi con ${dbStock} san pham trong kho`, 409)
     }
 
     return {
@@ -64,17 +97,43 @@ async function createOrder(authUser, payload) {
   })
 
   const totalAmount = normalizedItems.reduce((total, item) => total + item.price * item.quantity, 0)
+  const reservedItems = []
+  let createdOrder = null
 
-  const createdOrder = await Order.create({
-    id: `OD-${Date.now()}`,
-    userId: authUser.id,
-    items: normalizedItems,
-    paymentMethod: payload.paymentMethod || 'cod',
-    shippingAddress: payload.shippingAddress || {},
-    totalAmount,
-    status: 'pending',
-    createdAt: new Date(),
-  })
+  try {
+    for (const item of normalizedItems) {
+      const reservedProduct = await Product.findOneAndUpdate(
+        { id: item.productId, stock: { $gte: item.quantity } },
+        {
+          $inc: {
+            stock: -item.quantity,
+            sold: item.quantity,
+          },
+        },
+        { new: true },
+      )
+
+      if (!reservedProduct) {
+        throw createValidationError(`San pham ${item.productId} khong con du ton kho`, 409)
+      }
+
+      reservedItems.push(item)
+    }
+
+    createdOrder = await Order.create({
+      id: `OD-${Date.now()}`,
+      userId: authUser.id,
+      items: normalizedItems,
+      paymentMethod: payload.paymentMethod || 'cod',
+      shippingAddress: payload.shippingAddress || {},
+      totalAmount,
+      status: 'pending',
+      createdAt: new Date(),
+    })
+  } catch (error) {
+    await rollbackReservedStock(reservedItems)
+    throw error
+  }
 
   return sanitizeDoc(createdOrder)
 }

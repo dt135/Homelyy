@@ -2,6 +2,10 @@ import type { CartItem } from './cart'
 
 export type PaymentMethod = 'cod' | 'banking'
 
+export type OrderItem = CartItem & {
+  price: number
+}
+
 export type ShippingAddress = {
   fullName: string
   phone: string
@@ -13,7 +17,7 @@ export type ShippingAddress = {
 export type Order = {
   id: string
   userId: string
-  items: CartItem[]
+  items: OrderItem[]
   totalAmount: number
   paymentMethod: PaymentMethod
   shippingAddress: ShippingAddress
