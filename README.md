@@ -1,42 +1,42 @@
 ﻿# Homelyy
 
-Homelyy is a full-stack e-commerce project for home appliance retail, built as a portfolio project with an end-to-end shopping and administration flow.  
-The project focuses on practical backend concerns such as authentication, role-based access control, request validation, product and order management, media upload, and deployment-ready setup.  
-It is designed to demonstrate more than basic CRUD by covering the core flows behind a small but realistic commerce system.
+Homelyy là dự án thương mại điện tử full-stack cho lĩnh vực đồ điện gia dụng, được xây dựng theo hướng portfolio với luồng mua hàng và quản trị chạy end-to-end.  
+Dự án tập trung vào các bài toán backend thực tế như authentication, role-based access control, validation, quản lý sản phẩm và đơn hàng, upload media, cùng cấu hình sẵn sàng cho triển khai.  
+Mục tiêu là thể hiện nhiều hơn một project CRUD cơ bản thông qua các luồng nghiệp vụ cốt lõi của một hệ thống commerce quy mô nhỏ.
 
-## Short Description
+## Mô Tả Ngắn
 
-Homelyy simulates a complete online shopping workflow: product browsing, search and filtering, cart, checkout, order history, and admin operations.  
-On the backend side, the project exposes a REST API with JWT-based authentication, admin-protected endpoints, validation rules, MongoDB models, seed data, and Cloudinary integration for image upload.  
-The repository also includes deployment notes, API documentation, and database design references to support review, demo, and local setup.
+Homelyy mô phỏng đầy đủ luồng mua sắm trực tuyến: duyệt sản phẩm, tìm kiếm và lọc, giỏ hàng, checkout, lịch sử đơn hàng và thao tác quản trị.  
+Ở phía backend, dự án cung cấp REST API với JWT authentication, endpoint phân quyền cho admin, các quy tắc validation, mô hình dữ liệu MongoDB, seed data và tích hợp Cloudinary để upload ảnh.  
+Repository cũng đi kèm tài liệu triển khai, tài liệu API và thiết kế cơ sở dữ liệu để thuận tiện cho việc review, demo và chạy thử local.
 
-## Key Features
+## Tính Năng Chính
 
-### Customer Features
+### Tính Năng Người Dùng
 
-- Register, login, and update profile information
-- Browse products, view product details, and explore featured catalog pages
-- Search, filter, and sort products
-- Add items to cart and complete checkout
-- View personal order history after purchase
-- Use voice commands on the frontend for navigation, search, and filtering
+- Đăng ký, đăng nhập và cập nhật thông tin hồ sơ
+- Duyệt danh sách sản phẩm, xem chi tiết sản phẩm và trang catalog nổi bật
+- Tìm kiếm, lọc và sắp xếp sản phẩm
+- Thêm sản phẩm vào giỏ hàng và thực hiện checkout
+- Xem lịch sử đơn hàng cá nhân sau khi mua
+- Điều hướng, tìm kiếm và lọc sản phẩm bằng giọng nói ở frontend
 
-### Admin Features
+### Tính Năng Quản Trị
 
-- Access a dedicated admin dashboard
-- Manage categories and products
-- Manage orders and update processing status
-- Manage users with admin-only operations
-- Upload product and avatar images through Cloudinary
+- Truy cập dashboard quản trị riêng
+- Quản lý danh mục và sản phẩm
+- Quản lý đơn hàng và cập nhật trạng thái xử lý
+- Quản lý người dùng với quyền admin
+- Upload ảnh sản phẩm và ảnh đại diện qua Cloudinary
 
-### Backend Capabilities
+### Năng Lực Backend
 
-- REST API organized by domain modules
-- JWT authentication for protected routes
-- Role-based authorization for admin endpoints
-- Validation rules for email, password, phone, quantity, rating, and order payloads
-- MongoDB data models for users, products, categories, carts, orders, and reviews
-- Seed workflow for demo data and faster local review
+- REST API được tổ chức theo từng nhóm chức năng
+- JWT authentication cho các route bảo vệ
+- Role-based authorization cho các endpoint admin
+- Validation cho email, mật khẩu, số điện thoại, số lượng, rating và payload đơn hàng
+- Mô hình dữ liệu MongoDB cho users, products, categories, carts, orders và reviews
+- Cơ chế seed dữ liệu để hỗ trợ review và chạy demo nhanh
 
 ## Tech Stack
 
@@ -64,36 +64,36 @@ The repository also includes deployment notes, API documentation, and database d
 - Docker Compose
 - Nginx
 
-### Integrations
+### Tích Hợp
 
 - Cloudinary
 - Multer
 
-## Architecture / Project Structure
+## Cấu Trúc Dự Án
 
 ```text
 .
 |-- backend/      # Express API, business logic, models, middleware, seed data
-|-- frontend/     # Customer-facing UI and admin pages
+|-- frontend/     # Giao diện người dùng và trang quản trị
 |-- docs/         # Scope, API design, database schema, roadmap
-|-- deploy.md     # Deployment notes
+|-- deploy.md     # Ghi chú triển khai
 `-- README.md
 ```
 
-Backend source code is separated into controllers, services, models, routes, middlewares, utilities, and seed scripts. This structure keeps request handling, business logic, and persistence concerns relatively clear and easier to extend.
+Phần backend được tách thành controllers, services, models, routes, middlewares, utilities và seed scripts. Cách tổ chức này giúp luồng xử lý request, business logic và dữ liệu rõ ràng hơn, đồng thời thuận tiện cho việc mở rộng.
 
-## Setup and Run Locally
+## Cài Đặt Và Chạy Local
 
-### Option 1: Manual Setup
+### Cách 1: Chạy Thủ Công
 
-1. Clone the repository
+1. Clone repository
 
 ```powershell
 git clone <your-repository-url>
 cd Homelyy
 ```
 
-2. Create environment files
+2. Tạo file môi trường
 
 ```powershell
 Copy-Item .env.example .env
@@ -101,16 +101,16 @@ Copy-Item backend\.env.example backend\.env
 Copy-Item frontend\.env.example frontend\.env
 ```
 
-3. Configure required environment variables
+3. Cấu hình các biến môi trường cần thiết
 
-Required minimum values:
+Tối thiểu cần chuẩn bị:
 
-- `MONGODB_URI` in `.env` and `backend/.env`
-- `JWT_SECRET` for backend authentication
-- `VITE_API_BASE_URL` in `frontend/.env` if backend URL is changed
-- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` if image upload is needed
+- `MONGODB_URI` trong `.env` và `backend/.env`
+- `JWT_SECRET` cho xác thực backend
+- `VITE_API_BASE_URL` trong `frontend/.env` nếu thay đổi URL backend
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` nếu cần upload ảnh
 
-4. Install dependencies
+4. Cài đặt dependencies
 
 ```powershell
 cd backend
@@ -120,36 +120,36 @@ cd ..\frontend
 npm install
 ```
 
-5. Start the backend
+5. Khởi động backend
 
 ```powershell
 cd backend
 npm run dev
 ```
 
-Backend default URL: `http://localhost:4000`
+Backend mặc định chạy tại: `http://localhost:4000`
 
-6. Start the frontend
+6. Khởi động frontend
 
 ```powershell
 cd frontend
 npm run dev
 ```
 
-Frontend default URL: `http://localhost:5173`
+Frontend mặc định chạy tại: `http://localhost:5173`
 
-### Option 2: Run with Docker
+### Cách 2: Chạy Bằng Docker
 
 ```powershell
 docker compose up --build
 ```
 
-Default services:
+Mặc định:
 
 - Frontend: `http://localhost:8080`
 - Backend: `http://localhost:4000`
 
-### Environment Overview
+### Tổng Quan Biến Môi Trường
 
 `/.env`
 
@@ -179,36 +179,36 @@ Default services:
 
 - `VITE_API_BASE_URL=http://localhost:4000/api`
 
-## Demo / Accounts / Test Data
+## Demo / Tài Khoản / Dữ Liệu Mẫu
 
-### Demo Accounts
+### Tài Khoản Demo
 
-| Role | Email | Password |
+| Vai trò | Email | Mật khẩu |
 | --- | --- | --- |
 | User | `demo@homelyy.local` | `demo1234` |
 | Admin | `admin@homelyy.local` | `admin123` |
 
 ### Seed Data
 
-If `AUTO_SEED=true`, the backend will automatically seed demo data when starting with an empty database.
+Nếu `AUTO_SEED=true`, backend sẽ tự động seed dữ liệu demo khi khởi động với database trống.
 
-Manual seed:
+Seed thủ công:
 
 ```powershell
 cd backend
 npm run db:seed
 ```
 
-## Main Backend Highlights
+## Điểm Nổi Bật Về Backend
 
-- JWT-based authentication is used for protected routes, while admin APIs require authenticated requests with the appropriate role.
-- Authorization rules are applied to separate public, private, and admin-only endpoints, including safeguards such as preventing invalid admin deletion scenarios.
-- The API covers practical commerce flows: cart updates, checkout, order creation, order history, and admin-side order status management.
-- Validation rules are defined for key inputs such as email format, password strength, Vietnamese phone number format, quantity, rating, and non-empty order items.
-- The backend is organized into models, controllers, services, routes, and middleware, which makes the codebase easier to maintain and review.
-- Cloudinary integration is included for product and avatar image upload, and MongoDB seed scripts help prepare demo data quickly.
+- Sử dụng JWT authentication cho các route cần bảo vệ, đồng thời yêu cầu quyền phù hợp đối với các API admin.
+- Áp dụng authorization để tách rõ public, private và admin-only endpoints, bao gồm một số ràng buộc an toàn cho thao tác quản trị người dùng.
+- API bao phủ các luồng nghiệp vụ commerce quan trọng như cập nhật giỏ hàng, checkout, tạo đơn hàng, xem lịch sử đơn hàng và quản lý trạng thái đơn từ phía admin.
+- Validation được định nghĩa cho các đầu vào quan trọng như định dạng email, độ mạnh mật khẩu, số điện thoại Việt Nam, số lượng, rating và đơn hàng không được rỗng.
+- Backend được tổ chức theo models, controllers, services, routes và middleware, giúp codebase dễ bảo trì và dễ review hơn.
+- Tích hợp Cloudinary cho upload ảnh sản phẩm và ảnh đại diện, đồng thời có seed script MongoDB để chuẩn bị dữ liệu demo nhanh.
 
-## API and Project References
+## Tài Liệu Tham Khảo
 
 - `docs/rest-api.md`
 - `docs/database-schema.md`
@@ -220,27 +220,27 @@ npm run db:seed
 
 ### Backend
 
-- `npm run dev` - run backend with nodemon
-- `npm start` - run backend in production mode
-- `npm run lint` - run backend lint checks
-- `npm run db:seed` - seed demo data
+- `npm run dev` - chạy backend với nodemon
+- `npm start` - chạy backend ở chế độ production
+- `npm run lint` - kiểm tra lint backend
+- `npm run db:seed` - seed dữ liệu demo
 
 ### Frontend
 
-- `npm run dev` - run Vite development server
-- `npm run build` - create production build
-- `npm run lint` - run ESLint
-- `npm run typecheck` - run TypeScript checks
-- `npm run preview` - preview production build
+- `npm run dev` - chạy Vite development server
+- `npm run build` - build production
+- `npm run lint` - chạy ESLint
+- `npm run typecheck` - kiểm tra TypeScript
+- `npm run preview` - preview bản build production
 
-## Future Improvements
+## Hướng Phát Triển Thêm
 
-- Integrate a real payment gateway such as MoMo UAT or VNPay
-- Strengthen stock validation during order creation
-- Add tests for critical business flows
-- Improve the admin dashboard with richer analytics
-- Complete production deployment and error monitoring workflow
+- Tích hợp cổng thanh toán thực tế như MoMo UAT hoặc VNPay
+- Tăng cường kiểm tra tồn kho ở bước tạo đơn hàng
+- Bổ sung test cho các luồng nghiệp vụ quan trọng
+- Nâng cấp dashboard quản trị với thống kê chi tiết hơn
+- Hoàn thiện quy trình deploy production và theo dõi lỗi
 
-## Repository Note
+## Ghi Chú Repository
 
-This project is maintained as a portfolio repository to demonstrate practical backend and full-stack implementation skills in a small e-commerce system.
+Dự án này được duy trì như một portfolio repository nhằm thể hiện năng lực triển khai backend và full-stack trong bối cảnh một hệ thống thương mại điện tử quy mô nhỏ.
