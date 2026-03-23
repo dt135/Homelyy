@@ -61,7 +61,7 @@ async function updateCart(authUser, items) {
         updatedAt: new Date(),
       },
     },
-    { upsert: true, new: true, runValidators: true },
+    { upsert: true, returnDocument: 'after', runValidators: true },
   )
 
   return updated.items

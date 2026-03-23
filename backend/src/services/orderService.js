@@ -112,7 +112,7 @@ async function createOrder(authUser, payload) {
             sold: item.quantity,
           },
         },
-        { new: true },
+        { returnDocument: 'after' },
       )
 
       if (!reservedProduct) {

@@ -1,7 +1,5 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import AdminUndoToast from '../components/feedback/AdminUndoToast'
-import { useDeferredDelete } from '../hooks/useDeferredDelete'
 import {
   createAdminCategory,
   deleteAdminCategory,
@@ -28,9 +26,6 @@ function CategoryManagementPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<CategoryForm>(initialForm)
   const formRef = useRef<HTMLFormElement | null>(null)
-  const { pendingDelete, remainingSeconds, queueDelete, undoDelete } = useDeferredDelete({
-    onCommitError: (error) => setErrorMessage(getErrorMessage(error)),
-  })
 
   async function loadCategories() {
     try {
@@ -118,17 +113,16 @@ function CategoryManagementPage() {
       resetForm()
     }
 
-    await queueDelete({
-      label: `Đã xóa danh mục "${targetCategory.name}"`,
-      commit: () => deleteAdminCategory(categoryId).then(() => undefined),
-      rollback: () => {
-        setCategories((previous) => {
-          const next = [...previous]
-          next.splice(targetIndex, 0, targetCategory)
-          return next
-        })
-      },
-    })
+    try {
+      await deleteAdminCategory(categoryId)
+    } catch (error) {
+      setCategories((previous) => {
+        const next = [...previous]
+        next.splice(targetIndex, 0, targetCategory)
+        return next
+      })
+      setErrorMessage(getErrorMessage(error))
+    }
   }
 
   return (
@@ -214,13 +208,6 @@ function CategoryManagementPage() {
         </div>
       ) : null}
 
-      {pendingDelete ? (
-        <AdminUndoToast
-          message={pendingDelete.label}
-          remainingSeconds={remainingSeconds}
-          onUndo={undoDelete}
-        />
-      ) : null}
     </section>
   )
 }
